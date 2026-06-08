@@ -33,7 +33,6 @@
             justify-content: space-between;
             position: relative;
             box-sizing: border-box;
-            padding: 20px;
         }
 
         .screen {
@@ -44,12 +43,51 @@
             width: 100%;
             z-index: 2;
             box-sizing: border-box;
+            padding: 20px;
         }
         .active-screen {
             display: flex;
         }
 
-        /* شاشة الترحيب */
+        /* 1. شاشة التحميل البدئية الجيدة */
+        #loading-screen {
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+        }
+        .loading-ball {
+            font-size: 60px;
+            animation: spin 1.5s linear infinite;
+        }
+        .loading-text {
+            color: #ffe082;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .progress-bar-container {
+            width: 70%;
+            height: 8px;
+            background-color: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffe082, #ffb300);
+            box-shadow: 0 0 8px #ffe082;
+            transition: width 0.1s linear;
+        }
+
+        /* 2. شاشة خيارات تسجيل الدخول أولاً */
         .welcome-content {
             text-align: center;
             display: flex;
@@ -57,10 +95,8 @@
             justify-content: center;
             align-items: center;
             flex-grow: 1;
-            gap: 12px;
+            gap: 15px;
             width: 100%;
-            overflow-y: auto;
-            padding: 10px 0;
         }
         .avatar-container {
             width: 85px;
@@ -84,26 +120,14 @@
             font-weight: bold;
             color: #ffe082;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
-            margin: 0;
-        }
-        .name-input {
-            width: 85%;
-            padding: 12px;
-            border: 2px solid #ffe082;
-            border-radius: 12px;
-            font-size: 16px;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.9);
-            color: #111;
-            font-weight: bold;
-            outline: none;
+            margin: 0 0 10px 0;
         }
         .login-btn {
             width: 85%;
-            padding: 12px;
+            padding: 14px;
             border: none;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
@@ -114,10 +138,51 @@
             transition: transform 0.1s;
         }
         .login-google { background-color: #ffffff; color: #757575; }
-        .login-play { background-color: #107c10; color: #ffffff; }
         .login-facebook { background-color: #1877f2; color: #ffffff; }
-        .btn-guest { background-color: #ffe082; color: #111; font-size: 16px; }
+        .btn-guest { background-color: #cfd8dc; color: #37474f; }
         .login-btn:active, .btn-action:active, .btn-opt:active { transform: scale(0.97); }
+
+        /* زوايا الدعم المادي */
+        .bottom-support-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn-paypal-corner {
+            background-color: #ffb300;
+            color: #111;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 3. شاشة إدخال الاسم وبدء اللعب الحر وعرض المستويات */
+        .name-input {
+            width: 85%;
+            padding: 14px;
+            border: 2px solid #ffe082;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #111;
+            font-weight: bold;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .level-select-container {
+            display: flex; gap: 8px; width: 85%; justify-content: space-between; margin-top: 5px;
+        }
+        .btn-lvl { flex: 1; padding: 10px 5px; font-size: 13px; background: #37474f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* شاشة اللعب الأساسية */
         .top-bar {
@@ -173,7 +238,7 @@
             border-radius: 10px; text-align: center; color: #ffe082; font-weight: bold; font-size: 13px;
         }
 
-        /* النوافذ المنبثقة */
+        /* النوافذ المنبثقة والمعاد صياغتها بالكامل */
         .overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.85); justify-content: center; align-items: center;
@@ -188,73 +253,96 @@
             border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 15px;
         }
         .btn-ad-huge { background-color: #e65100; color: white; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; border: none; width: 100%; cursor: pointer; }
-        .btn-support-mady { background-color: #e91e63; color: white; }
         
         .ball-spinner { font-size: 50px; margin: 15px 0; display: inline-block; animation: spin 1.2s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .level-select-container {
-            display: flex; gap: 8px; width: 85%; justify-content: space-between; margin-top: 5px;
+
+        /* نافذة الإعدادات */
+        .settings-popup {
+            background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px;
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
-        .btn-lvl { flex: 1; padding: 10px 5px; font-size: 13px; background: #37474f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-settings-toggle {
+            background: #555; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
+    <!-- أداة شاشة التحميل بملء الشاشة مع الشريط الذهبي -->
+    <div id="loading-screen">
+        <div class="loading-ball">⚽</div>
+        <div class="loading-text">جاري التحميل...</div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="load-progress"></div>
+        </div>
+    </div>
+
     <div class="game-container">
         
-        <!-- الشاشة 1: القائمة الرئيسية والتسجيل واختيار المستوى -->
-        <div id="welcome-screen" class="screen active-screen">
+        <!-- المرحلة 1: شاشة الدخول أولاً (جوجل / فيسبوك / زائر) -->
+        <div id="auth-screen" class="screen">
             <div class="welcome-content">
                 <div class="avatar-container">⚽</div>
-                <div class="welcome-title">مرحباً بك في تحدي العباقرة</div>
+                <div class="welcome-title">تحدي العباقرة الرياضي</div>
+                <div style="color: #fff; margin-bottom: 10px; font-size: 14px;">الرجاء اختيار طريقة لتسجيل الدخول لبدء اللعب:</div>
                 
-                <!-- مستطيل إدخال الاسم المعرف -->
-                <input type="text" id="username-input" class="name-input" placeholder="أدخل اسمك هنا للبدء...">
-                
-                <!-- أزرار تسجيل الدخول الحقيقية بعد كتابة الاسم -->
-                <button class="login-btn login-google" onclick="handleAuth('Google')">
+                <button class="login-btn login-google" onclick="processLogin('Google')">
                     🌐 دخول بواسطة Google
                 </button>
-                <button class="login-btn login-play" onclick="handleAuth('Google Play')">
-                    🎮 دخول بواسطة Google Play
-                </button>
-                <button class="login-btn login-facebook" onclick="handleAuth('Facebook')">
+                <button class="login-btn login-facebook" onclick="processLogin('Facebook')">
                     📘 دخول بواسطة Facebook
                 </button>
-                <button class="login-btn btn-guest" onclick="handleAuth('Visitor')">
-                    👤 اللعب كـ زائر مباشر
+                <button class="login-btn btn-guest" onclick="processLogin('Visitor')">
+                    👤 الدخول كـ زائر مباشر
                 </button>
+            </div>
+            
+            <!-- الدعم المادي مثبت في زاوية الشاشة من تحت أول ما يسجل -->
+            <div class="bottom-support-wrapper">
+                <button class="btn-paypal-corner" onclick="playClickSound(); openSupportLink();">
+                    💰 دعم المطور (PayPal)
+                </button>
+            </div>
+        </div>
+
+        <!-- المرحلة 2: شاشة إدخال الاسم وبدء أنماط اللعب الحر والمستويات -->
+        <div id="welcome-screen" class="screen">
+            <div class="welcome-content">
+                <div class="avatar-container">🏆</div>
+                <div class="welcome-title" id="welcome-user-title">مرحباً بك عبقري الملاعب</div>
                 
-                <!-- أزرار التحكم بحالة اللعب (جديد أو إكمال وقوف) -->
+                <!-- مستطيل إدخال الاسم المعرف بدون رسائل منبثقة مزعجة -->
+                <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك الكروي هنا لمتابعة اللعب...">
+                
+                <!-- أزرار التحكم بحالة اللعب وحفظ التقدم -->
                 <button id="resume-btn" class="btn-action" style="background: #0288d1; width: 85%; display: none;" onclick="resumeLastGame()">
                     🔄 إكمال اللعب من آخر وقوف
                 </button>
-                <button id="newgame-btn" class="btn-action" style="background: #689f38; width: 85%; display: none;" onclick="startBrandNewGame()">
-                    ✨ بدء لعبة جديدة وتصفير العداد
+                <button id="newgame-btn" class="btn-action" style="background: #689f38; width: 85%;" onclick="startBrandNewGame()">
+                    ✨ بدء مباراة جديدة (سؤال 1)
                 </button>
 
-                <div style="color: #ffe082; font-weight: bold; font-size: 14px; margin-top: 5px;">🎯 أو اختر مستوى للعب الحر:</div>
+                <div style="color: #ffe082; font-weight: bold; font-size: 14px; margin-top: 10px;">🎯 أو حدد مستوى للعب الحر مباشرة:</div>
                 <div class="level-select-container">
                     <button class="btn-lvl" onclick="selectLevelDirect(0)">مبتدئ (1-10)</button>
                     <button class="btn-lvl" onclick="selectLevelDirect(10)">محترف (11-20)</button>
                     <button class="btn-lvl" onclick="selectLevelDirect(20)">أسطورة (21-50)</button>
                 </div>
-
-                <button class="login-btn btn-support-mady" onclick="playClickSound(); openSupportLink();">
-                    💰 دعم المطور (دعم مادي للمشروع)
-                </button>
             </div>
         </div>
 
-        <!-- الشاشة 2: واجهة اللعب الحقيقية -->
+        <!-- المرحلة 3: شاشة واجهة اللعب الأساسية والمباريات -->
         <div id="game-screen" class="screen">
             <div class="top-bar">
                 <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
                 <div class="timer-box" id="timer-num">10</div>
                 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                     <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
-                    <button style="background: #555; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer;" onclick="exitToMainMenu()">🚪 خروج للرئيسية</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-settings-toggle" onclick="playClickSound(); toggleSettingsMenu(true);">⚙️ الإعدادات</button>
+                        <button style="background: #c62828; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="exitToMainMenu()">🚪 خروج</button>
+                    </div>
                 </div>
             </div>
 
@@ -263,7 +351,19 @@
             <div class="bottom-bar" id="score-display">النقاط: 0 | السؤال: 1/50</div>
         </div>
 
-        <!-- منبثقة 1: انتهاء القلوب ونظام الإعلانات المعدل -->
+        <!-- منبثقة الإعدادات وبداخلها زر الدعم المادي -->
+        <div class="overlay" id="settings-overlay">
+            <div class="settings-popup">
+                <h3 style="margin-top: 0; color: #333;">⚙️ إعدادات اللعبة</h3>
+                <p style="font-size: 14px; color: #666;">يمكنك دعم استمرار هذا المشروع وتطويره عبر الدفع الإلكتروني المباشر:</p>
+                <button class="btn-action" style="background-color: #ffb300; color: #111; margin-bottom: 15px;" onclick="openSupportLink();">
+                    💰 دعم المطور بواسطة PayPal
+                </button>
+                <button class="btn-action" style="background-color: #555;" onclick="playClickSound(); toggleSettingsMenu(false);">إغلاق الإعدادات</button>
+            </div>
+        </div>
+
+        <!-- منبثقة انتهاء القلوب ونظام شحن الطاقة بالإعلانات -->
         <div class="overlay" id="gameover-overlay">
             <div class="overlay-card">
                 <h2 style="color: #c62828; margin-top:0;">💔 نفدت القلوب!</h2>
@@ -273,7 +373,7 @@
             </div>
         </div>
 
-        <!-- منبثقة 2: شاشة تشغيل الإعلان المحاكي -->
+        <!-- منبثقة شاشة تشغيل الإعلان المحاكي التفاعلي -->
         <div class="overlay" id="ad-playing-overlay" style="background-color: rgba(0,0,0,0.95);">
             <div class="ball-spinner">⚽</div>
             <div style="color: #ffe082; font-size: 18px; font-weight: bold;">جاري تشغيل الإعلان للحصول على الطاقة...</div>
@@ -283,14 +383,14 @@
     </div>
 
     <script>
-        // مصفوفة الـ 50 سؤال الكاملة والموزعة بدقة بدون أي نقصان ومقسمة لمستويات صعودية
+        // مصفوفة الـ 50 سؤال الكاملة والموزعة بدقة 
         const questions = [
             // المستوى 1: مبتدئ (1-10)
             { q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟", options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
             { q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
             { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم？", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
             { q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟", options: ["11 لاعب", "12 لاعب", "10 لاعبين", "9 لاعبين"], correct: 0 },
-            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
+            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'？", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
             { q: "كم عدد بطولات كأس العالم التي فازت بها البرازيل؟", options: ["4 بطولات", "5 بطولات", "6 بطولات", "3 بطولات"], correct: 1 },
             { q: "أي فريق يلعب له النجم المصري محمد صلاح حالياً؟", options: ["تشيلسي", "ريال مدريد", "ليفربول", "مانشستر سيتي"], correct: 2 },
             { q: "ما هي الدولة التي استضافت كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
@@ -315,7 +415,7 @@
             { q: "أي نادي إنجليزي فاز بدوري أبطال أوروبا عام 2021؟", options: ["مانشستر سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
             { q: "من سجل أسرع هاتريك في تاريخ الدوري الإنجليزي الممتاز؟", options: ["ساديو ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
             { q: "أي دولة استضافت أول بطولة لكأس العالم عام 1930؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
-            { q: "من هو الهداف التاريخي للدوري الإسباني (La Liga)؟", options: ["رونالدو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
+            { q: "من هو الهداف التاريخي للدوري الإسباني (La Liga)؟", options: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
             { q: "ما هو النادي البرتغالي الذي نشأ فيه كريستيانو رونالدو؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
             { q: "كم عدد ألقاب دوري أبطال أوروبا التي يملكها ميلان الإيطالي؟", options: ["5 ألقاب", "7 ألقاب", "9 ألقاب", "6 ألقاب"], correct: 1 },
             // المستوى 4: خارق (31-40)
@@ -349,7 +449,22 @@
         let timerInterval;
         let isAnsweringBlocked = false;
 
-        // مولد مؤثرات صوتية رقمي مدمج عند الضغط على الأزرار ليعطى صوت تكتكة كروية
+        // ميكانيكية شاشة التحميل التلقائية (تعبئة الشريط الذهبي) عند فتح اللعبة مباشرة
+        window.addEventListener("DOMContentLoaded", () => {
+            let fillElement = document.getElementById("load-progress");
+            let progress = 0;
+            let loadingInterval = setInterval(() => {
+                progress += 5;
+                fillElement.style.width = progress + "%";
+                if (progress >= 100) {
+                    clearInterval(loadingInterval);
+                    document.getElementById("loading-screen").style.display = "none";
+                    // إظهار شاشة اختيار طريقة تسجيل الدخول أولاً بحسب طلبك
+                    changeScreen("auth-screen");
+                }
+            }, 100);
+        });
+
         function playClickSound() {
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -363,7 +478,7 @@
                 gain.connect(ctx.destination);
                 osc.start();
                 osc.stop(ctx.currentTime + 0.08);
-            } catch(e) { console.log("Audio contexts not supported"); }
+            } catch(e) {}
         }
 
         function changeScreen(screenId) {
@@ -371,41 +486,46 @@
             document.getElementById(screenId).classList.add('active-screen');
         }
 
-        // معالجة تسجيل الدخول الحقيقي وحفظ الاسم وحالة الأزرار المتقدمة
-        function handleAuth(method) {
+        // معالجة الضغط على زر تسجيل الدخول أولاً، ثم الانتقال لشاشة الاسم والبدء
+        function processLogin(method) {
             playClickSound();
-            let inputName = document.getElementById("username-input").value.trim();
-            if (inputName === "") {
-                alert("فضلًا يا كابتن، اكتب اسمك أولاً في المستطيل المخصص!");
-                return;
-            }
-            
-            localStorage.setItem("saved_player_name", inputName);
-            alert(`مرحباً بك يا ${inputName}! تم تسجيل دخولك بنجاح تام عبر [${method}].`);
-            
-            checkSavedProgressUI();
-        }
+            // استرجاع الاسم المحفوظ مسبقاً إذا كان موجوداً
+            let savedName = localStorage.getItem("saved_player_name") || "";
+            document.getElementById("username-input").value = savedName;
 
-        function checkSavedProgressUI() {
+            // الانتقال للشاشة التالية لكتابة الاسم وتأكيد البدء
+            changeScreen("welcome-screen");
+            
+            // التحقق من حالة اللعبة المحفوظة لإظهار زر الإكمال أو إخفائه
             let savedIndex = localStorage.getItem("saved_q_index");
             if (savedIndex !== null && parseInt(savedIndex) > 0) {
                 document.getElementById("resume-btn").style.display = "block";
                 document.getElementById("resume-btn").innerText = `🔄 إكمال اللعب من آخر وقوف (سؤال ${parseInt(savedIndex) + 1})`;
-                document.getElementById("newgame-btn").style.display = "block";
             } else {
-                startBrandNewGame();
+                document.getElementById("resume-btn").style.display = "none";
             }
+        }
+
+        // التحقق من الاسم عند الضغط على بدء اللعب لمنع الحقول الفارغة بدون تنبيهات منبثقة
+        function validateAndGetName() {
+            let inputName = document.getElementById("username-input").value.trim();
+            if (inputName === "") {
+                // بدلاً من الـ alert، نقوم بوضع اسم افتراضي تلقائي لضمان سلاسة تجربة المستخدم
+                inputName = "عبقري الملاعب";
+                document.getElementById("username-input").value = inputName;
+            }
+            localStorage.setItem("saved_player_name", inputName);
+            return inputName;
         }
 
         function startBrandNewGame() {
             playClickSound();
+            validateAndGetName();
+            
             currentQuestionIndex = 0;
             score = 0;
             hearts = 5;
             saveCurrentStateToStorage();
-            
-            document.getElementById("resume-btn").style.display = "none";
-            document.getElementById("newgame-btn").style.display = "none";
             
             changeScreen('game-screen');
             loadQuizQuestion();
@@ -413,6 +533,8 @@
 
         function resumeLastGame() {
             playClickSound();
+            validateAndGetName();
+
             currentQuestionIndex = parseInt(localStorage.getItem("saved_q_index")) || 0;
             score = parseInt(localStorage.getItem("saved_score")) || 0;
             hearts = parseInt(localStorage.getItem("saved_hearts")) || 5;
@@ -423,14 +545,10 @@
 
         function selectLevelDirect(indexStart) {
             playClickSound();
-            let inputName = document.getElementById("username-input").value.trim();
-            if (inputName === "") {
-                localStorage.setItem("saved_player_name", "زائر");
-            } else {
-                localStorage.setItem("saved_player_name", inputName);
-            }
+            validateAndGetName();
+
             currentQuestionIndex = indexStart;
-            score = indexStart * 10; // نقاط تقديرية لبداية المستوى
+            score = indexStart * 10; 
             hearts = 5;
             saveCurrentStateToStorage();
             changeScreen('game-screen');
@@ -539,21 +657,17 @@
             }, 3000); 
         }
 
+        function toggleSettingsMenu(show) {
+            document.getElementById("settings-overlay").style.display = show ? "flex" : "none";
+        }
+
         function openSupportLink() {
-            // تم تعديل رابط الدعم المادي الحقيقي والخاص بك بنجاح هنا
             window.open("https://www.paypal.me/diaaALAWMRA", "_blank");
         }
 
         function exitToMainMenu() {
             clearInterval(timerInterval);
-            changeScreen('welcome-screen');
-            // عند الخروج يقرأ حالة الحفظ لإظهار زر الإكمال أو إخفائه
-            let savedIndex = localStorage.getItem("saved_q_index");
-            if (savedIndex !== null && parseInt(savedIndex) > 0) {
-                document.getElementById("resume-btn").style.display = "block";
-                document.getElementById("resume-btn").innerText = `🔄 إكمال اللعب من آخر وقوف (سؤال ${parseInt(savedIndex) + 1})`;
-                document.getElementById("newgame-btn").style.display = "block";
-            }
+            changeScreen('auth-screen');
         }
 
         function hideGameOver() { document.getElementById("gameover-overlay").style.display = "none"; }
@@ -562,20 +676,6 @@
             localStorage.removeItem("saved_score");
             localStorage.removeItem("saved_hearts");
         }
-
-        // تشغيل فحص أولي إذا كان هناك مستخدم مسجل مسبقاً لحفظ سلاسة العودة للقائمة
-        window.onload = () => {
-            let pName = localStorage.getItem("saved_player_name");
-            if (pName) {
-                document.getElementById("username-input").value = pName;
-                let savedIndex = localStorage.getItem("saved_q_index");
-                if (savedIndex !== null && parseInt(savedIndex) > 0) {
-                    document.getElementById("resume-btn").style.display = "block";
-                    document.getElementById("resume-btn").innerText = `🔄 إكمال اللعب من آخر وقوف (سؤال ${parseInt(savedIndex) + 1})`;
-                    document.getElementById("newgame-btn").style.display = "block";
-                }
-            }
-        };
     </script>
 </body>
 </html>
