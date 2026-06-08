@@ -5,666 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>تحدي العباقرة الرياضي - النسخة المتطورة</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #1b5e20;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: pan-y pinch-zoom;
-        }
-        
-        body {
-            overscroll-behavior: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
-        }
-        
-        .game-container {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2e7d32, #1b5e20);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-
-        /* منع التمرير الزائد */
-        .game-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        .global-header {
-            width: 100%;
-            background: linear-gradient(135deg, #111, #1a1a1a);
-            color: #ffe082;
-            text-align: center;
-            padding: 12px 0;
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            border-bottom: 2px solid #ffb300;
-            z-index: 10;
-        }
-
-        /* تبويبات التحكم */
-        .tabs {
-            display: flex;
-            background: rgba(0,0,0,0.7);
-            padding: 5px;
-            gap: 5px;
-            justify-content: center;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 8px;
-            background: #37474f;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: #ffb300;
-            color: #111;
-        }
-        .tab-content {
-            display: none;
-            padding: 15px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 12px;
-            margin: 10px;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        .refresh-warning {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.9);
-            color: #4caf50;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 11px;
-            text-align: center;
-            z-index: 200;
-            font-weight: bold;
-            border: 1px solid #4caf50;
-            pointer-events: none;
-        }
-
-        .screen {
-            display: none;
-            flex-direction: column;
-            flex-grow: 1;
-            width: 100%;
-            padding: 15px;
-        }
-        .active-screen {
-            display: flex;
-        }
-
-        #loading-screen {
-            background: #111;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100;
-        }
-        .loading-ball {
-            font-size: 60px;
-            animation: spin 1.5s linear infinite;
-        }
-        .loading-text {
-            color: #ffe082;
-            font-size: 20px;
-            font-weight: bold;
-        }
-        .progress-bar-container {
-            width: 70%;
-            height: 8px;
-            background-color: #333;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #ffe082, #ffb300);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* الأزرار والواجهات */
-        .login-btn, .btn-action, .btn-opt, .btn-lvl {
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .login-btn:active, .btn-action:active, .btn-opt:active, .btn-lvl:active {
-            transform: scale(0.97);
-        }
-
-        .login-btn {
-            width: 85%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 5px auto;
-        }
-        .login-google { background: white; color: #757575; }
-        .login-facebook { background: #1877f2; color: white; }
-        .btn-guest { background: #cfd8dc; color: #37474f; }
-
-        .btn-action {
-            background: #2e7d32;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 8px;
-        }
-        .btn-lvl {
-            padding: 8px;
-            background: #37474f;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-
-        .name-input {
-            width: 85%;
-            padding: 12px;
-            border: 2px solid #ffb300;
-            border-radius: 12px;
-            text-align: center;
-            background: rgba(255,255,255,0.95);
-            font-size: 16px;
-            margin: 10px auto;
-        }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 15px;
-            margin-bottom: 10px;
-        }
-        .timer-bar {
-            height: 6px;
-            background: #ff5252;
-            width: 100%;
-            border-radius: 3px;
-            transition: width 0.1s linear;
-            margin-top: 5px;
-        }
-        .question-section {
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(0,0,0,0.65));
-            backdrop-filter: blur(10px);
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        .options-section {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .btn-opt {
-            background: white;
-            color: #2e7d32;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { width: 100%; height: 100%; overflow: hidden; position: fixed; background-color: #1b5e20; font-family: sans-serif; user-select: none; }
+        .game-container { width: 100%; height: 100%; background: linear-gradient(135deg, #2e7d32, #1b5e20); display: flex; flex-direction: column; overflow-y: auto; }
+        .global-header { width: 100%; background: #111; color: #ffe082; text-align: center; padding: 12px; font-weight: bold; border-bottom: 2px solid #ffb300; }
+        .screen { display: none; flex-direction: column; flex-grow: 1; padding: 15px; }
+        .active-screen { display: flex; }
+        .btn-action { background: #2e7d32; color: white; padding: 12px; border-radius: 10px; border: none; font-weight: bold; width: 100%; margin-top: 8px; }
+        .btn-opt { background: white; color: #2e7d32; padding: 12px; border-radius: 12px; border: none; font-weight: bold; margin: 5px 0; }
         .correct-answer { background: #4caf50 !important; color: white !important; }
         .wrong-answer { background: #f44336 !important; color: white !important; }
-
-        .overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 50;
-            padding: 20px;
-        }
-        .overlay-card {
-            background: white;
-            padding: 20px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 350px;
-            text-align: center;
-        }
-        .shop-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 10px;
-            margin: 8px 0;
-        }
-        .badge {
-            display: inline-block;
-            background: #ffb300;
-            color: #111;
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            margin: 3px;
-        }
-        .encouragement-msg {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.85);
-            color: #ffb300;
-            padding: 12px 20px;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: bold;
-            z-index: 150;
-            animation: fadeOutMsg 1.5s forwards;
-            white-space: nowrap;
-        }
-        @keyframes fadeOutMsg {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
-            20% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); visibility: hidden; }
-        }
+        .overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; z-index: 50; }
+        .overlay-card { background: white; padding: 20px; border-radius: 20px; width: 90%; text-align: center; }
+        .encouragement-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: #ffb300; padding: 10px 20px; border-radius: 20px; z-index: 200; }
+        .tabs { display: flex; background: rgba(0,0,0,0.5); padding: 5px; gap: 5px; }
+        .tab-btn { flex: 1; padding: 8px; background: #37474f; color: white; border: none; border-radius: 5px; }
+        .tab-btn.active { background: #ffb300; color: #111; }
+        .tab-content { display: none; color: white; padding: 10px; }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div class="loading-ball">⚽</div>
-    <div class="loading-text">جاري التحميل...</div>
-    <div class="progress-bar-container">
-        <div class="progress-bar-fill" id="load-progress"></div>
-    </div>
-</div>
-
 <div class="game-container">
     <div class="global-header">🏆 تحدي العباقرة الرياضي 🏆</div>
 
-    <!-- شاشة الدخول -->
     <div id="auth-screen" class="screen active-screen">
-        <div style="text-align: center; margin-top: 30%;">
-            <div style="font-size: 70px;">⚽</div>
-            <h2 style="color: #ffe082;">تحدي العباقرة</h2>
-            <button class="login-btn login-google" onclick="simulateAuth()">🌐 دخول كزائر</button>
-        </div>
+        <button class="btn-action" onclick="simulateAuth()">دخول كزائر</button>
     </div>
 
-    <!-- شاشة الترحيب والقائمة -->
     <div id="welcome-screen" class="screen">
-        <div class="welcome-content" style="text-align: center;">
-            <div style="font-size: 50px;">🏆</div>
-            <h3 style="color:#ffe082;">مرحباً <span id="player-name-display">اللاعب</span>!</h3>
-            <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك...">
-            <button class="btn-action" onclick="setPlayerName()">✅ تأكيد الاسم</button>
-            
-            <div id="game-options" style="display:none; width:100%; margin-top:15px;">
-                <button class="btn-action" style="background:#0288d1;" onclick="resumeGame()">🔄 استكمال اللعب</button>
-                <button class="btn-action" onclick="newGame()">✨ لعبة جديدة</button>
-                
-                <div style="margin:15px 0;">
-                    <div class="tabs">
-                        <button class="tab-btn active" onclick="showTab('achievements')">🏅 إنجازات</button>
-                        <button class="tab-btn" onclick="showTab('leaderboard')">📊 المتصدرين</button>
-                        <button class="tab-btn" onclick="showTab('shop')">🛒 متجر</button>
-                        <button class="tab-btn" onclick="showTab('daily')">🎁 يومي</button>
-                    </div>
-                    <div id="achievements-tab" class="tab-content active" style="text-align:right;"></div>
-                    <div id="leaderboard-tab" class="tab-content"></div>
-                    <div id="shop-tab" class="tab-content"></div>
-                    <div id="daily-tab" class="tab-content"></div>
-                </div>
+        <h3 id="player-name-display">أهلاً بك</h3>
+        <input type="text" id="username-input" class="btn-action" placeholder="اكتب اسمك...">
+        <button class="btn-action" onclick="setPlayerName()">تأكيد</button>
+        <div id="game-options" style="display:none;">
+            <button class="btn-action" onclick="newGame()">بدء اللعبة</button>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('achievements')">🏅</button>
+                <button class="tab-btn" onclick="showTab('leaderboard')">📊</button>
             </div>
+            <div id="achievements-tab" class="tab-content active"></div>
+            <div id="leaderboard-tab" class="tab-content"></div>
         </div>
     </div>
 
-    <!-- شاشة اللعب -->
     <div id="game-screen" class="screen">
-        <div class="top-bar">
-            <div>🎯 مستوى <span id="level-num">1</span></div>
-            <div>❤️ <span id="hearts-display">5</span></div>
-            <div>⭐ <span id="score-display">0</span></div>
+        <div class="top-bar" style="color:white; display:flex; justify-content:space-between;">
+            <div>المستوى: <span id="level-num">1</span></div>
+            <div>النقاط: <span id="score-display">0</span></div>
         </div>
-        <div class="timer-bar" id="timer-bar" style="width:100%"></div>
-        <div class="question-section" id="question-text">...</div>
-        <div class="options-section" id="options-container"></div>
-        <button class="btn-action" style="margin-top:10px; background:#555;" onclick="exitToMenu()">🚪 القائمة الرئيسية</button>
+        <div id="question-text" style="color:white; margin: 20px 0; text-align:center;"></div>
+        <div id="options-container"></div>
     </div>
-
-    <!-- النوافذ المنبثقة -->
-    <div id="reward-overlay" class="overlay"><div class="overlay-card"><h3>🎁 مكافأة!</h3><p id="reward-text"></p><button class="btn-action" onclick="closeOverlay('reward-overlay')">حسناً</button></div></div>
-    <div id="gameover-overlay" class="overlay"><div class="overlay-card"><h3>💔 انتهت المحاولات</h3><button class="btn-action" onclick="watchAdForHearts()">📺 شاهد إعلان (قلوب مجانية)</button><button class="btn-action" onclick="exitToMenu()">رجوع</button></div></div>
-    <div id="ad-overlay" class="overlay"><div class="ball-spinner">⏳</div><p style="color:white;">جاري تشغيل الإعلان...</p></div>
-
-    <div class="refresh-warning">🛡️ محمي ضد الرفريش - تقدمك محفوظ تلقائياً</div>
 </div>
 
 <script>
-    // الأسئلة (اختصاراً - نفس الأسئلة الخمسين لكن تم تصغير المصفوفة هنا للمساحة، في النسخة الكاملة كلها موجودة)
     const questions = [
         { q: "من هو الهداف التاريخي لدوري أبطال أوروبا؟", options: ["ميسي", "رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
-        { q: "من فاز بكأس العالم 2022؟", options: ["فرنسا", "الأرجنتين", "كرواتيا", "المغرب"], correct: 1 },
-        { q: "كم عدد لاعبي كرة القدم في الملعب؟", options: ["10", "11", "12", "9"], correct: 1 },
+        { q: "من فاز بكأس العالم 2022؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
+        { q: "كم عدد لاعبي كرة القدم الأساسيين؟", options: ["10", "11", "9", "12"], correct: 1 },
         { q: "ما هو النادي الملقب بالملكي؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو", "فالنسيا"], correct: 1 },
-        { q: "من فاز بالكرة الذهبية 2022؟", options: ["مبابي", "بنزيما", "ميسي", "هالاند"], correct: 1 },
+        { q: "كم لقب عالم للبرازيل؟", options: ["4", "5", "6", "3"], correct: 1 },
+        { q: "أين أقيم كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
+        { q: "من الملقب بالظاهرة؟", options: ["رونالدينيو", "رونالدو", "كريستيانو", "روماريو"], correct: 1 },
+        { q: "من الملقب بالسيدة العجوز؟", options: ["ميلان", "إنتر", "يوفنتوس", "روما"], correct: 2 },
+        { q: "مدرب يونايتد التاريخي؟", options: ["مورينيو", "فيرغسون", "غوارديولا", "فينغر"], correct: 1 },
+        { q: "فريق ليفاندوفسكي قبل برشلونة؟", options: ["بايرن", "دورتموند", "لايبزيغ", "شالكه"], correct: 0 },
+        { q: "هداف كأس العالم التاريخي؟", options: ["بيليه", "كلوزه", "رونالدو", "ميسي"], correct: 1 },
+        { q: "الكرة الذهبية 2022؟", options: ["مودريتش", "بنزيما", "مبابي", "هالاند"], correct: 1 },
+        { q: "جنسية هالاند؟", options: ["سويدي", "نرويجي", "دنماركي", "ألماني"], correct: 1 },
+        { q: "ملعب الريال؟", options: ["برنابيو", "كامب نو", "ميتروبوليتانو", "الميستايا"], correct: 0 },
+        { q: "مدافع فاز بالكرة الذهبية؟", options: ["راموس", "فان دايك", "كانافارو", "بويول"], correct: 2 },
+        { q: "ألقاب بايرن في الأبطال؟", options: ["5", "6", "7", "4"], correct: 1 },
+        { q: "بطل يورو 2020؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
+        { q: "هداف الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ميسي", "أغويرو"], correct: 2 },
+        { q: "تأسيس فيفا؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
+        { q: "أفريقي فاز بالكرة الذهبية؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
+        { q: "بطل أبطال 2021؟", options: ["سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
+        { q: "أسرع هاتريك بالدوري الإنجليزي؟", options: ["ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
+        { q: "أول مستضيف للمونديال؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
+        { q: "هداف الدوري الإسباني؟", options: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
+        { q: "نادي رونالدو الأول؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
+        { q: "عدد ألقاب ميلان بالأبطال؟", options: ["5", "7", "9", "6"], correct: 1 },
+        { q: "أكثر من شارك في المونديال؟", options: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], correct: 0 },
+        { q: "فريق فاز بالدوري بلا هزيمة 2004؟", options: ["يونايتد", "تشيلسي", "أرسنال", "سيتي"], correct: 2 },
+        { q: "مدرب ثلاثية الريال؟", options: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], correct: 1 },
+        { q: "هداف فرنسا؟", options: ["هنري", "جيرو", "مبابي", "بلاتيني"], correct: 1 },
+        { q: "فريق السداسية 2009؟", options: ["ريال مدريد", "بايرن", "برشلونة", "يونايتد"], correct: 2 },
+        { q: "منتخب وصل لنصف نهائي 2002؟", options: ["اليابان", "السعودية", "كوريا", "إيران"], correct: 2 },
+        { q: "هداف الإنجليزي التاريخي؟", options: ["روني", "شيرر", "هنري", "هاري كين"], correct: 1 },
+        { q: "نادي رونالدينيو الأوروبي الأول؟", options: ["باريس", "موناكو", "مارسيليا", "ليون"], correct: 0 },
+        { q: "أكثر لاعب فاز بكأس العالم؟", options: ["مارادونا", "بيليه", "رونالدو", "زيدان"], correct: 1 },
+        { q: "بطل 1993 بالأبطال؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
+        { q: "صاحب الـ 91 هدفاً بسنة؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
+        { q: "بطل ثلاثية 2010؟", options: ["يوفنتوس", "ميلان", "إنتر", "روما"], correct: 2 },
+        { q: "لقب منتخب كولومبيا؟", options: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], correct: 2 },
+        { q: "سجل في 5 مونديالات؟", options: ["ميسي", "رونالدو", "كلوزه", "بيليه"], correct: 1 },
+        { q: "بطل مونديال 1966؟", options: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
+        { q: "هداف إسبانيا؟", options: ["راؤول", "فيا", "توريس", "إنييستا"], correct: 1 },
+        { q: "حارس فاز بالكرة الذهبية؟", options: ["بوفون", "كاسياس", "ياشين", "نوير"], correct: 2 },
+        { q: "ألقاب ليفربول في الأبطال؟", options: ["5", "6", "7", "8"], correct: 1 },
+        { q: "بطل إيطاليا 2023؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
+        { q: "أسرع هدف في المونديال؟", options: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], correct: 0 },
+        { q: "حارس ملقب بالأخطبوط؟", options: ["كاسياس", "ياشين", "بوفون", "كان"], correct: 2 },
+        { q: "أكبر نتيجة في المونديال؟", options: ["10-1", "9-0", "8-0", "7-0"], correct: 1 },
+        { q: "ملعب نهائي 2022؟", options: ["لوسيل", "البيت", "خليفة", "الثمامة"], correct: 0 },
+        { q: "أي منتخب لقب بـ 'الماكينات'؟", options: ["ألمانيا", "إيطاليا", "فرنسا", "إسبانيا"], correct: 0 }
     ];
-    // لتكرار الأسئلة وجعلها 50 سؤال (تكرير بسيط للاختبار)
-    while(questions.length < 50) questions.push(...questions.slice(0,10));
-    questions.length = 50;
 
-    // متغيرات اللعبة
-    let currentQIndex = 0, score = 0, hearts = 5, timer, answering = false;
-    let playerName = localStorage.getItem("playerName") || "";
-    let achievements = JSON.parse(localStorage.getItem("achievements") || '{"firstWin":false,"streak5":false,"streak10":false,"score100":false}');
-    let leaderboard = JSON.parse(localStorage.getItem("leaderboard") || '[]');
-    let lastDaily = localStorage.getItem("lastDaily") || "0";
-    let shopHearts = parseInt(localStorage.getItem("shopHearts") || "0");
+    let currentQIndex = 0, score = 0, playerName = "";
 
-    function saveGame() {
-        localStorage.setItem("savedQ", currentQIndex);
-        localStorage.setItem("savedScore", score);
-        localStorage.setItem("savedHearts", hearts);
-    }
-    function loadGame() {
-        currentQIndex = parseInt(localStorage.getItem("savedQ") || "0");
-        score = parseInt(localStorage.getItem("savedScore") || "0");
-        hearts = parseInt(localStorage.getItem("savedHearts") || "5");
-        if(hearts<=0) hearts=5;
-    }
-
-    // شاشة التحميل
-    let progress=0, interval = setInterval(()=>{
-        progress+=2;
-        document.getElementById("load-progress").style.width=progress+"%";
-        if(progress>=100){
-            clearInterval(interval);
-            document.getElementById("loading-screen").style.display="none";
-            if(playerName) document.getElementById("game-options").style.display="block";
-            document.getElementById("player-name-display").innerText=playerName||"اللاعب";
-            updateTabs();
-        }
-    },60);
-
-    function simulateAuth(){ document.getElementById("auth-screen").classList.remove("active-screen"); document.getElementById("welcome-screen").classList.add("active-screen"); }
-    function setPlayerName(){
-        let name = document.getElementById("username-input").value.trim();
-        if(name) playerName = name;
-        else playerName = "بطل";
-        localStorage.setItem("playerName", playerName);
-        document.getElementById("player-name-display").innerText = playerName;
-        document.getElementById("game-options").style.display = "block";
-        updateTabs();
-    }
-    function newGame(){ currentQIndex=0; score=0; hearts=5; saveGame(); startGame(); }
-    function resumeGame(){ loadGame(); if(hearts<=0) hearts=3; startGame(); }
-    function startGame(){
-        document.getElementById("welcome-screen").classList.remove("active-screen");
-        document.getElementById("game-screen").classList.add("active-screen");
-        loadQuestion();
-    }
-    function exitToMenu(){
-        clearInterval(timer);
-        document.getElementById("game-screen").classList.remove("active-screen");
-        document.getElementById("welcome-screen").classList.add("active-screen");
-        updateTabs();
-    }
-    function showMessage(msg){
-        let div = document.createElement("div");
-        div.className = "encouragement-msg";
-        div.innerText = msg;
-        document.body.appendChild(div);
-        setTimeout(()=>div.remove(),1500);
-    }
-    function loadQuestion(){
-        if(currentQIndex >= questions.length){
-            showMessage("🏆 تهانينا! أكملت جميع الأسئلة 🏆");
-            updateLeaderboard();
-            exitToMenu();
-            return;
-        }
-        if(hearts<=0){ document.getElementById("gameover-overlay").style.display="flex"; return; }
-        answering=false;
+    function simulateAuth() { document.getElementById("auth-screen").classList.remove("active-screen"); document.getElementById("welcome-screen").classList.add("active-screen"); }
+    function setPlayerName() { playerName = document.getElementById("username-input").value; document.getElementById("game-options").style.display = "block"; }
+    function newGame() { currentQIndex = 0; score = 0; document.getElementById("welcome-screen").classList.remove("active-screen"); document.getElementById("game-screen").classList.add("active-screen"); loadQuestion(); }
+    
+    function loadQuestion() {
         let q = questions[currentQIndex];
         document.getElementById("question-text").innerText = q.q;
         document.getElementById("score-display").innerText = score;
-        document.getElementById("level-num").innerText = Math.floor(currentQIndex/10)+1;
-        let h = "";
-        for(let i=0;i<hearts;i++) h+="❤️";
-        document.getElementById("hearts-display").innerHTML = h || "💔";
-        
+        document.getElementById("level-num").innerText = Math.floor(currentQIndex / 10) + 1;
         let container = document.getElementById("options-container");
         container.innerHTML = "";
-        q.options.forEach((opt,idx)=>{
+        q.options.forEach((opt, idx) => {
             let btn = document.createElement("button");
             btn.className = "btn-opt";
             btn.innerText = opt;
-            btn.onclick = ()=>checkAnswer(idx, btn);
+            btn.onclick = () => { if(idx === q.correct) { score += 10; btn.classList.add("correct-answer"); } else { btn.classList.add("wrong-answer"); } setTimeout(() => { currentQIndex++; if(currentQIndex < questions.length) loadQuestion(); else alert("انتهت اللعبة! نتيجتك: " + score); }, 500); };
             container.appendChild(btn);
         });
-        startTimer();
     }
-    function startTimer(){
-        let time=10;
-        let bar = document.getElementById("timer-bar");
-        bar.style.width="100%";
-        if(timer) clearInterval(timer);
-        timer = setInterval(()=>{
-            time--;
-            let percent = (time/10)*100;
-            bar.style.width=percent+"%";
-            if(time<=0){
-                clearInterval(timer);
-                if(!answering) mistake();
-            }
-        },1000);
-    }
-    function checkAnswer(selected, btn){
-        if(answering) return;
-        answering=true;
-        clearInterval(timer);
-        let q = questions[currentQIndex];
-        let buttons = document.querySelectorAll(".btn-opt");
-        if(selected === q.correct){
-            score += 10;
-            btn.classList.add("correct-answer");
-            showMessage("✅ إجابة صحيحة! +10 نقاط");
-            checkAchievements(true);
-            currentQIndex++;
-            saveGame();
-            setTimeout(()=>loadQuestion(),800);
-        } else {
-            btn.classList.add("wrong-answer");
-            buttons[q.correct].classList.add("correct-answer");
-            showMessage("❌ إجابة خاطئة...");
-            mistake();
-        }
-    }
-    function mistake(){
-        hearts--;
-        saveGame();
-        if(hearts<=0){
-            clearInterval(timer);
-            document.getElementById("gameover-overlay").style.display="flex";
-        } else {
-            currentQIndex++;
-            saveGame();
-            loadQuestion();
-        }
-    }
-    function checkAchievements(isCorrect){
-        if(!isCorrect) return;
-        if(score===10 && !achievements.firstWin){
-            achievements.firstWin=true;
-            showMessage("🏅 إنجاز جديد: أول فوز!");
-        }
-        let streak = parseInt(localStorage.getItem("streak")||"0");
-        streak = isCorrect ? streak+1 : 0;
-        localStorage.setItem("streak", streak);
-        if(streak>=5 && !achievements.streak5){
-            achievements.streak5=true; showMessage("🏅 إنجاز: 5 إجابات متتالية!");
-        }
-        if(streak>=10 && !achievements.streak10){
-            achievements.streak10=true; showMessage("🏅 إنجاز: 10 إجابات متتالية!");
-        }
-        if(score>=100 && !achievements.score100){
-            achievements.score100=true; showMessage("🏅 إنجاز: 100 نقطة!");
-        }
-        localStorage.setItem("achievements", JSON.stringify(achievements));
-    }
-    function updateLeaderboard(){
-        let found=false;
-        for(let i=0;i<leaderboard.length;i++){
-            if(leaderboard[i].name === playerName){
-                leaderboard[i].score = Math.max(leaderboard[i].score, score);
-                found=true; break;
-            }
-        }
-        if(!found) leaderboard.push({name:playerName, score:score});
-        leaderboard.sort((a,b)=>b.score-a.score);
-        leaderboard = leaderboard.slice(0,10);
-        localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-    }
-    function updateTabs(){
-        // عرض الإنجازات
-        let achHtml = "<ul>";
-        achHtml += `<li>🏆 أول فوز: ${achievements.firstWin?"✅":"❌"}</li>`;
-        achHtml += `<li>🔥 5 متتالية: ${achievements.streak5?"✅":"❌"}</li>`;
-        achHtml += `<li>⭐ 10 متتالية: ${achievements.streak10?"✅":"❌"}</li>`;
-        achHtml += `<li>💰 100 نقطة: ${achievements.score100?"✅":"❌"}</li>`;
-        achHtml += `</ul><p>💎 نقاطك: ${score}</p>`;
-        document.getElementById("achievements-tab").innerHTML = achHtml;
-        
-        // لوحة المتصدرين
-        let lbHtml = "<ol>";
-        leaderboard.forEach(p=>{ lbHtml += `<li>${p.name}: ${p.score} نقطة</li>`; });
-        lbHtml += "</ol>";
-        document.getElementById("leaderboard-tab").innerHTML = lbHtml;
-        
-        // المتجر
-        let shopHtml = `<div class="shop-item"><span>❤️ قلب إضافي</span><button class="btn-lvl" onclick="buyHeart()">💰 100 نقطة</button></div>`;
-        shopHtml += `<p>💰 نقاطك: ${score}</p>`;
-        document.getElementById("shop-tab").innerHTML = shopHtml;
-        
-        // المكافأة اليومية
-        let now = new Date().toDateString();
-        let dailyTaken = (lastDaily === now);
-        let dailyHtml = dailyTaken ? "✅ تم استلام مكافأة اليوم!" : `<button class="btn-action" onclick="dailyReward()">🎁 استلم مكافأة اليوم (قلب مجاني)</button>`;
-        document.getElementById("daily-tab").innerHTML = dailyHtml;
-    }
-    function buyHeart(){
-        if(score>=100){
-            score -= 100;
-            hearts++;
-            saveGame();
-            showMessage("❤️ تم شراء قلب!");
-            updateTabs();
-        } else showMessage("نقاطك غير كافية!");
-    }
-    function dailyReward(){
-        let now = new Date().toDateString();
-        if(lastDaily !== now){
-            hearts++;
-            saveGame();
-            lastDaily = now;
-            localStorage.setItem("lastDaily", lastDaily);
-            showMessage("🎁 مكافأة يومية: +1 قلب!");
-            updateTabs();
-        } else showMessage("لقد استلمت مكافأة اليوم بالفعل!");
-    }
-    function watchAdForHearts(){
-        document.getElementById("gameover-overlay").style.display="none";
-        document.getElementById("ad-overlay").style.display="flex";
-        setTimeout(()=>{
-            document.getElementById("ad-overlay").style.display="none";
-            hearts = 5;
-            saveGame();
-            loadQuestion();
-            showMessage("❤️ تم شحن القلوب! +5 قلوب");
-        },2000);
-    }
-    function showTab(tab){
-        document.querySelectorAll(".tab-btn").forEach(btn=>btn.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(cont=>cont.classList.remove("active"));
-        document.getElementById(`${tab}-tab`).classList.add("active");
-        if(tab==="achievements") document.querySelector(".tab-btn").classList.add("active");
-        else if(tab==="leaderboard") document.querySelectorAll(".tab-btn")[1].classList.add("active");
-        else if(tab==="shop") document.querySelectorAll(".tab-btn")[2].classList.add("active");
-        else if(tab==="daily") document.querySelectorAll(".tab-btn")[3].classList.add("active");
-    }
-    function closeOverlay(id){ document.getElementById(id).style.display="none"; if(id==="gameover-overlay") exitToMenu(); }
 
-    // حماية الرفريش للموبايل
-    document.body.addEventListener('touchmove', function(e) {
-        if(e.touches[0].clientY < 50) e.preventDefault();
-    }, { passive: false });
-    window.addEventListener('keydown', function(e) {
-        if(e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
-            e.preventDefault();
-            showMessage("❌ تم حظر تحديث الصفحة!");
-            return false;
-        }
-    });
-    document.addEventListener('contextmenu', e => e.preventDefault());
+    function showTab(tab) {
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.getElementById(tab + "-tab").classList.add("active");
+        event.target.classList.add("active");
+    }
+
+    function updateTabs() { document.getElementById("achievements-tab").innerHTML = "🏅 إنجازات: " + (score >= 100 ? "محقق" : "قيد العمل"); document.getElementById("leaderboard-tab").innerHTML = "📊 المتصدر: " + playerName; }
 </script>
 </body>
 </html>
