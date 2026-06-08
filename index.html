@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحدي العباقرة الرياضي</title>
+    <title>تحدي العباقرة الرياضي Pro</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,7 +16,7 @@
             margin: 0;
         }
         .game-container {
-            background-color: #2e7d32; /* اللون الأخضر اللي بالصورة */
+            background-color: #2e7d32;
             width: 100%;
             max-width: 400px;
             height: 90vh;
@@ -29,7 +29,48 @@
             position: relative;
             box-sizing: border-box;
         }
-        .top-bar {
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            width: 100%;
+        }
+        .active-screen {
+            display: flex;
+        }
+        /* واجهة الدخول */
+        .welcome-content {
+            text-align: center;
+            margin-auto: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .welcome-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffe082;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+        }
+        .level-badge-info {
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        /* الأشرطة العلوية والسفلية */
+        .top-bar, .bottom-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -40,23 +81,25 @@
         .stat-box {
             background-color: #b0bec5;
             color: #111;
-            padding: 5px 15px;
-            border-radius: 10px;
+            padding: 5px 12px;
+            border-radius: 8px;
             font-weight: bold;
             text-align: center;
+            font-size: 13px;
         }
         .timer-box {
             color: #ff1744;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
         }
         .hearts {
             color: #ff1744;
-            font-size: 24px;
+            font-size: 22px;
+            letter-spacing: 2px;
         }
         .question-section {
             text-align: center;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             margin: 20px 0;
             flex-grow: 1;
@@ -72,7 +115,7 @@
             gap: 12px;
             margin-bottom: 20px;
         }
-        .option-btn {
+        .btn {
             background-color: white;
             color: #2e7d32;
             border: none;
@@ -83,27 +126,33 @@
             cursor: pointer;
             transition: 0.2s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
         }
-        .option-btn:active {
+        .btn:active {
             transform: scale(0.98);
         }
+        .btn-start {
+            background-color: #ffe082;
+            color: #111;
+            font-size: 22px;
+            padding: 18px;
+        }
         .bottom-bar {
-            text-align: center;
-            font-size: 18px;
             color: #ffe082;
             font-weight: bold;
+            font-size: 15px;
         }
-        /* النافذة المنبثقة للرسائل وشحن القلوب */
+        /* النوافذ المنبثقة */
         .overlay {
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85);
+            background-color: rgba(0,0,0,0.9);
             border-radius: 20px;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            z-content: 10;
+            z-index: 10;
             text-align: center;
             padding: 20px;
             box-sizing: border-box;
@@ -113,121 +162,179 @@
             color: #333;
             padding: 25px;
             border-radius: 15px;
-            width: 80%;
+            width: 85%;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .overlay-content h2 {
-            margin-top: 0;
         }
         .overlay-btn {
             background-color: #2e7d32;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
             margin-top: 15px;
-            width: 100%;
         }
         .ad-btn {
-            background-color: #8d6e63;
+            background-color: #e65100;
             color: white;
-            padding: 15px;
-            font-size: 18px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 20px;
-            width: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
     <div class="game-container">
-        <div class="top-bar">
-            <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
-            <div class="timer-box">الوقت:<br><span id="timer-num">10</span></div>
-            <div class="hearts" id="hearts-display">❤️❤️❤️</div>
+        
+        <!-- 1. واجهة الدخول -->
+        <div id="welcome-screen" class="screen active-screen">
+            <div class="welcome-content">
+                <div class="welcome-title">⚽ تحدي العباقرة الرياضي ⚽</div>
+                <div class="welcome-subtitle">جاهز لاختبار معلوماتك الكروية؟</div>
+                
+                <div class="level-badge-info">
+                    <strong>🏆 نظام المستويات الخمسة:</strong><br>
+                    المستوى 1: مبتدئ (1-10)<br>
+                    المستوى 2: محترف (11-20)<br>
+                    المستوى 3: عالمي (21-30)<br>
+                    المستوى 4: خارق (31-40)<br>
+                    المستوى 5: أسطوري (41-50)
+                </div>
+
+                <button class="btn btn-start" onclick="changeScreen('game-screen'); startGame();">إبدأ التحدي الآن</button>
+            </div>
         </div>
 
-        <div class="question-section" id="question-text">
-            جاري تحميل السؤال الأول...
-        </div>
-
-        <div class="options-section" id="options-container">
+        <!-- 2. واجهة اللعب الأساسية -->
+        <div id="game-screen" class="screen">
+            <div class="top-bar">
+                <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
+                <div class="timer-box">الوقت:<br><span id="timer-num">10</span></div>
+                <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
             </div>
 
-        <div class="bottom-bar" id="score-display">
-            النقاط: 0 | السؤال: 1/10
+            <div class="question-section" id="question-text">
+                جاري تحميل السؤال الأول...
+            </div>
+
+            <div class="options-section" id="options-container">
+                <!-- الأزرار تولد هنا بالـ JS -->
+            </div>
+
+            <div class="bottom-bar" id="score-display">
+                النقاط: 0 | السؤال: 1/50
+            </div>
         </div>
 
+        <!-- النافذة المنبثقة للإجابة (صحيحة / خاطئة) -->
         <div class="overlay" id="message-overlay">
             <div class="overlay-content">
-                <h2 id="overlay-title">إجابة صحيحة!</h2>
+                <h2 id="overlay-title">إجابة صحيحة</h2>
                 <p id="overlay-body">يا وحش كمل الحماس!</p>
-                <button class="overlay-btn" onclick="closeOverlay()">حسناً</button>
+                <button class="btn overlay-btn" onclick="closeOverlay()">حسناً</button>
             </div>
         </div>
 
+        <!-- نافذة انتهاء القلوب (خسارة) -->
         <div class="overlay" id="gameover-overlay">
-            <div style="color: white; width: 90%;">
-                <h1 style="color: #ff1744; font-size: 32px;">???? انتهت القلوب!</h1>
-                <p style="font-size: 18px;">يمكنك شحن المحاولات ومتابعة اللعب مجاناً</p>
-                <button class="ad-btn" onclick="simulateAd()">???? مشاهدة إعلان وشحن القلوب</button>
+            <div class="overlay-content">
+                <h1 style="color: #ff1744; margin-top:0;">💔 انتهت القلوب!</h1>
+                <p style="font-size: 16px; color:#555;">يمكنك مشاهدة إعلان مكافأة لإضافة قلوب ومتابعة اللعب مجاناً دون خسارة نقاطك!</p>
+                <button class="btn ad-btn" onclick="simulateAd()">📺 مشاهدة إعلان (+2 قلب)</button>
+                <button class="btn overlay-btn" style="background-color:#555;" onclick="changeScreen('welcome-screen'); hideGameOver();">العودة للرئيسية</button>
             </div>
         </div>
+
     </div>
 
     <script>
-        // بنك الأسئلة
+        // بنك الأسئلة الموسع (50 سؤال مقسمة على 5 مستويات)
         const questions = [
-            {
-                q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟",
-                options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"],
-                correct: 1
-            },
-            {
-                q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟",
-                options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"],
-                correct: 2
-            },
-            {
-                q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟",
-                options: ["40 دقيقة", "45 دقيقة", "50 دقيقة", "60 دقيقة"],
-                correct: 1
-            },
-            {
-                q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟",
-                options: ["10 لاعبين", "11 لاعب", "12 لاعب", "9 لاعبين"],
-                correct: 1
-            }
+            // --- المستوى 1: مبتدئ (1 - 10) ---
+            { q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟", options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
+            { q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
+            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
+            { q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟", options: ["11 لاعب", "12 لاعب", "10 لاعبين", "9 لاعبين"], correct: 0 },
+            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
+            { q: "كم عدد بطولات كأس العالم التي فازت بها البرازيل؟", options: ["4 بطولات", "5 بطولات", "6 بطولات", "3 بطولات"], correct: 1 },
+            { q: "أي فريق يلعب له النجم المصري محمد صلاح حالياً؟", options: ["تشيلسي", "ريال مدريد", "ليفربول", "مانشستر سيتي"], correct: 2 },
+            { q: "ما هي الدولة التي استضافت كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
+            { q: "كم كرت أصفر يتسبب في طرد اللاعب مباشرة بعده؟", options: ["كرت واحد", "كرتين", "3 كروت", "لا يطرد"], correct: 1 },
+            { q: "ما هو الفريق الإنجليزي المعروف بلقب 'الشياطين الحمر'؟", options: ["أرسنال", "ليفربول", "مانشستر يونايتد", "تشيلسي"], correct: 2 },
+
+            // --- المستوى 2: محترف (11 - 20) ---
+            { q: "من هو اللاعب الملقب بالـ 'ظاهرة'؟", options: ["رونالدينيو", "رونالدو لويس نازاريو", "كريستيانو رونالدو", "روماريو"], correct: 1 },
+            { q: "أي نادي إيطالي يلقب بـ 'السيدة العجوز'؟", options: ["ميلان", "إنتر ميلان", "يوفنتوس", "روما"], correct: 2 },
+            { q: "من هو المدرب التاريخي لنادي مانشستر يونايتد الذي اعتزل عام 2013؟", options: ["مورينيو", "أليكس فيرغسون", "غوارديولا", "فينغر"], correct: 1 },
+            { q: "في أي نادي ألماني اشتهر المهاجم روبرت ليفاندوفسكي قبل برشلونة؟", options: ["بايرن ميونخ", "بوروسيا دورتموند", "لايبزيغ", "شالكه"], correct: 0 },
+            { q: "من هو الهداف التاريخي لكأس العالم بـ 16 هدفاً؟", options: ["بيليه", "كلوزه", "رونالدو البرازيلي", "ميسي"], correct: 1 },
+            { q: "لاعب فاز بجائزة الكرة الذهبية لعام 2022؟", options: ["مودريتش", "كريم بنزيما", "مباني", "هالاند"], correct: 1 },
+            { q: "أي بلد ينتمي إليه النجم إيرلينغ هالاند؟", options: ["السويد", "النرويج", "الدنمارك", "ألمانيا"], correct: 1 },
+            { q: "ما هو أكبر ملعب كرة قدم في إسبانيا؟", options: ["سانتياغو برنابيو", "كامب نو", "الميتروبوليتانو", "الميستايا"], correct: 1 },
+            { q: "من هو المدافع الوحيد الذي فاز بالكرة الذهبية في القرن الحادي والعشرين؟", options: ["راموس", "فان دايك", "فابيو كانافارو", "بويول"], correct: 2 },
+            { q: "كم مرة فاز نادي بايرن ميونخ بدوري أبطال أوروبا؟", options: ["5 مرات", "6 مرات", "7 مرات", "4 مرات"], correct: 1 },
+
+            // --- المستوى 3: عالمي (21 - 30) ---
+            { q: "أي منتخب فاز بلقب كأس أمم أوروبا (يورو 2020)؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ليونيل ميسي", "أغويرو"], correct: 2 },
+            { q: "في أي عام تم تأسيس الاتحاد الدولي لكرة القدم (FIFA)؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
+            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية (Ballon d'Or)؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
+            { q: "أي نادي إنجليزي فاز بدوري أبطال أوروبا عام 2021؟", options: ["مانشستر سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
+            { q: "من هو اللاعب الذي سجل أسرع هاتريك في تاريخ الدوري الإنجليزي الممتاز (خلال دقيقتين و56 ثانية)؟", options: ["ساديو ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
+            { q: "أي دولة استضافت أول بطولة لكأس العالم عام 1930؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
+            { q: "من هو الهداف التاريخي للدوري الإسباني (La Liga)؟", options: ["رونالدو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
+            { q: "ما هو النادي البرتغالي الذي نشأ وترعرع فيه كريستيانو رونالدو؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
+            { q: "كم عدد ألقاب دوري أبطال أوروبا التي يملكها نادي إيه سي ميلان الإيطالي؟", options: ["5 ألقاب", "7 ألقاب", "9 ألقاب", "6 ألقاب"], correct: 1 },
+
+            // --- المستوى 4: خارق (31 - 40) ---
+            { q: "من هو اللاعب الذي شارك في أكبر عدد من المباريات في تاريخ كأس العالم؟", options: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], correct: 1 },
+            { q: "نادي إنجليزي هو الوحيد الذي فاز بالدوري بدون أي خسارة (الذهبي) عام 2004؟", options: ["مانشستر يونايتد", "تشيلسي", "أرسنال", "مانشستر سيتي"], correct: 2 },
+            { q: "من هو المدرب الذي فاز بدوري أبطال أوروبا 3 مرات متتالية مع ريال مدريد؟", options: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب فرنسا؟", options: ["هنري", "جيرو", "مبابي", "بلاتيني"], correct: 1 },
+            { q: "أي نادٍ أوروبي فاز بالسداسية التاريخية عام 2009؟", options: ["ريال مدريد", "بايرن ميونخ", "برشلونة", "مانشستر يونايتد"], correct: 2 },
+            { q: "ما هو المنتخب الآسيوي الذي وصل لنصف نهائي كأس العالم 2002؟", options: ["اليابان", "السعودية", "كوريا الجنوبية", "إيران"], correct: 2 },
+            { q: "من هو هداف الدوري الإنجليزي التاريخي (Alan Shearer) بـ 260 هدفاً؟", options: ["روني", "ألان شيرر", "هنري", "هاري كين"], correct: 1 },
+            { q: "في أي نادٍ فرنسي أنهى النجم البرازيلي رونالدينيو مسيرته في أوروبا؟", options: ["باريس سان جيرمان", "موناكو", "مارسيليا", "ليون"], correct: 0 },
+            { q: "من هو اللاعب الذي فاز بأكبر عدد من ألقاب كأس العالم كلاعب (3 مرات)؟", options: ["مارادونا", "بيليه", "رونالدو البرازيلي", "زيدان"], correct: 1 },
+            { q: "أي فريق فاز بأول نسخة من دوري أبطال أوروبا بنظامها الحديث عام 1993؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
+
+            // --- المستوى 5: أسطوري (41 - 50) ---
+            { q: "من هو اللاعب الذي سجل أكبر عدد من الأهداف في سنة ميلادية واحدة (91 هدفاً عام 2012)؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
+            { q: "أي نادٍ إيطالي فاز بالثلاثية التاريخية عام 2010 مع مورينيو؟", options: ["يوفنتوس", "ميلان", "إنتر ميلان", "روما"], correct: 2 },
+            { q: "ما هو لقب منتخب كولومبيا لكرة القدم؟", options: ["التانغو", "السامبا", "صناع القهوة (Los Cafeteros)", "الساموراي"], correct: 2 },
+            { q: "من هو أول لاعب يسجل في 5 بطولات كأس عالم مختلفة؟", options: ["ميسي", "كريستيانو رونالدو", "كلوزه", "بيليه"], correct: 1 },
+            { q: "أي منتخب فاز بكأس العالم 1966 التي أقيمت في إنجلترا؟", options: ["ألمانيا الغربية", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب إسبانيا؟", options: ["راؤول", "ديفيد فيا", "توريس", "إنييستا"], correct: 1 },
+            { q: "من هو الحارس الوحيد في تاريخ كرة القدم الذي فاز بجائزة الكرة الذهبية؟", options: ["بوفون", "كاسياس", "ليف ياشين", "نوير"], correct: 2 },
+            { q: "كم عدد ألقاب دوري أبطال أوروبا التي حققها نادي ليفربول؟", options: ["5 ألقاب", "6 ألقاب", "7 ألقاب", "4 ألقاب"], correct: 1 },
+            { q: "أي نادٍ فاز بلقب الدوري الإيطالي لموسم 2022-2023 بعد غياب 33 سنة؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
+            { q: "من هو الهداف التاريخي لبطولات كأس العالم للمنتخبات بشكل عام؟", options: ["ميروسلاف كلوزه", "رونالدو البرازيلي", "بيليه", "ميسي"], correct: 0 }
         ];
 
         let currentQuestionIndex = 0;
         let score = 0;
-        let hearts = 3;
+        let hearts = 5; // تم تعديلها لتصبح 5 قلوب
         let timeLeft = 10;
         let timerInterval;
+
+        function changeScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(screenId).classList.add('active-screen');
+        }
 
         function startGame() {
             currentQuestionIndex = 0;
             score = 0;
-            hearts = 3;
+            hearts = 5;
             updateHeartsDisplay();
             showQuestion();
         }
 
         function showQuestion() {
             if (currentQuestionIndex >= questions.length) {
-                alert("مبروك! أنهيت كل الأسئلة بنجاح!");
-                startGame();
+                alert("🎉 أسطورة! لقد أنهيت كافة مستويات اللعبة الـ 5 بنجاح تام!");
+                changeScreen('welcome-screen');
                 return;
             }
+
+            // تحديد مستوى الصعوبة ديناميكياً كل 10 أسئلة
+            let level = Math.floor(currentQuestionIndex / 10) + 1;
+            document.getElementById("level-num").innerText = level;
 
             timeLeft = 10;
             document.getElementById("timer-num").innerText = timeLeft;
@@ -237,13 +344,13 @@
             let currentQuestion = questions[currentQuestionIndex];
             document.getElementById("question-text").innerText = currentQuestion.q;
             document.getElementById("score-display").innerText = `النقاط: ${score} | السؤال: ${currentQuestionIndex + 1}/${questions.length}`;
-            
+
             let optionsContainer = document.getElementById("options-container");
             optionsContainer.innerHTML = "";
 
             currentQuestion.options.forEach((option, index) => {
                 let button = document.createElement("button");
-                button.className = "option-btn";
+                button.className = "btn";
                 button.innerText = option;
                 button.onclick = () => checkAnswer(index);
                 optionsContainer.appendChild(button);
@@ -256,7 +363,7 @@
                 document.getElementById("timer-num").innerText = timeLeft;
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    wrongAnswer("انتهى الوقت!");
+                    wrongAnswer("⏱️ انتهى الوقت المسموح!");
                 }
             }, 1000);
         }
@@ -266,11 +373,11 @@
             let currentQuestion = questions[currentQuestionIndex];
             if (selectedIndex === currentQuestion.correct) {
                 score += 10;
-                document.getElementById("overlay-title").innerText = "✅ إجابة صحيحة يا وحش!";
-                document.getElementById("overlay-body").innerText = "تستحق النقاط، استمر!";
+                document.getElementById("overlay-title").innerText = "✅ إجابة صحيحة يا وحش";
+                document.getElementById("overlay-body").innerText = "تستحق النقاط، استمر لرفع المستوى!";
                 document.getElementById("message-overlay").style.display = "flex";
             } else {
-                wrongAnswer("إجابة خاطئة!");
+                wrongAnswer("❌ إجابة خاطئة!");
             }
         }
 
@@ -280,7 +387,7 @@
             if (hearts <= 0) {
                 document.getElementById("gameover-overlay").style.display = "flex";
             } else {
-                document.getElementById("overlay-title").innerText = `❌ ${reason}`;
+                document.getElementById("overlay-title").innerText = reason;
                 document.getElementById("overlay-body").innerText = "خسرت قلباً، حاول التركيز في السؤال القادم.";
                 document.getElementById("message-overlay").style.display = "flex";
             }
@@ -298,17 +405,22 @@
             showQuestion();
         }
 
-        function simulateAd() {
-            alert("يتم الآن تحميل وتشغيل إعلان مكافأة AdMob بمجرد تفعيله...");
-            // هنا بالمستقبل بنحط كود الإعلان الحقيقي تبعك
-            document.getElementById("gameover-overlay").style.style.display = "none";
-            hearts = 3;
-            updateHeartsDisplay();
-            showQuestion();
+        function hideGameOver() {
+            document.getElementById("gameover-overlay").style.display = "none";
         }
 
-        // تشغيل اللعبة فور تحميل الصفحة
-        window.onload = startGame;
+        // ميزة مشاهدة الإعلان لشحن القلوب
+        function simulateAd() {
+            alert("📺 يتم الآن تشغيل إعلان مكافأة من AdMob... (انتظر 5 ثوانٍ)");
+            setTimeout(() => {
+                hearts += 2; // يمنح اللاعب قلبين إضافيين لمتابعة اللعب
+                if (hearts > 5) hearts = 5; // الحد الأقصى 5 قلوب
+                updateHeartsDisplay();
+                hideGameOver();
+                showQuestion();
+                alert("✅ تم شحن القلوب بنجاح! متاح لك المتابعة الآن بنفس النقاط.");
+            }, 2000);
+        }
     </script>
 </body>
 </html>
