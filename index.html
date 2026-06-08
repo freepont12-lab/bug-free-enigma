@@ -34,11 +34,26 @@
             box-sizing: border-box;
         }
 
+        /* شريط هيدر اللعبة المستبدل كلياً لتثبيت اسم اللعبة */
+        .global-header {
+            width: 100%;
+            background-color: #111111;
+            color: #ffe082;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            border-bottom: 2px solid #ffb300;
+            z-index: 10;
+        }
+
         .screen {
             display: none;
             flex-direction: column;
             justify-content: space-between;
-            height: 100%;
+            flex-grow: 1;
             width: 100%;
             z-index: 2;
             box-sizing: border-box;
@@ -48,7 +63,7 @@
             display: flex;
         }
 
-        /* شاشة التحميل البدئية بالشريط الذهبي */
+        /* شاشة التحميل البدئية المعدلة لتستغرق من 5 إلى 7 ثوانٍ */
         #loading-screen {
             background-color: #111;
             display: flex;
@@ -82,7 +97,6 @@
             width: 0%;
             background: linear-gradient(90deg, #ffe082, #ffb300);
             box-shadow: 0 0 8px #ffe082;
-            transition: width 0.1s linear;
         }
 
         /* واجهات الدخول والترحيب */
@@ -202,6 +216,7 @@
         .timer-box { color: #ff5252; font-size: 22px; font-weight: bold; }
         .hearts { color: #ff1744; font-size: 18px; letter-spacing: 2px; }
 
+        /* تعديل لمسة خلفية الأسئلة (Glassmorphism الاحترافي) */
         .question-section {
             text-align: center;
             font-size: 20px;
@@ -212,11 +227,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.6);
-            padding: 20px;
-            border-radius: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.65));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+            border: 2px solid rgba(255, 224, 130, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         .options-section { display: flex; flex-direction: column; gap: 10px; width: 100%; }
@@ -257,14 +275,11 @@
             background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px;
             text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
-        .btn-settings-toggle {
-            background: #555; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;
-        }
     </style>
 </head>
 <body>
 
-    <!-- شاشة التحميل البدئية -->
+    <!-- شاشة التحميل البدئية الثابتة (معدلة لـ 6 ثوانٍ بالمتوسط) -->
     <div id="loading-screen">
         <div class="loading-ball">⚽</div>
         <div class="loading-text">جاري التحميل...</div>
@@ -275,7 +290,10 @@
 
     <div class="game-container">
         
-        <!-- خطوة 1: خيارات تسجيل الدخول أولاً (تم حذف زر الدعم من هنا لتنظيم التدفق) -->
+        <!-- الشريط العلوي الاحترافي الجديد كلياً الذي يحل محل النجمة واسم يوسف القديم -->
+        <div class="global-header">🏆 تحدي العباقرة الرياضي 🏆</div>
+        
+        <!-- خطوة 1: خيارات تسجيل الدخول أولاً -->
         <div id="auth-screen" class="screen">
             <div class="welcome-content">
                 <div class="avatar-container">⚽</div>
@@ -306,7 +324,6 @@
                 <div class="avatar-container">🏆</div>
                 <div class="welcome-title" id="welcome-user-title">إعداد ملف اللاعب</div>
                 
-                <!-- جزء إدخال الاسم البدئي -->
                 <div id="name-input-area" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;">
                     <div style="color: #fff; font-size: 14px;">يرجى كتابة اسمك الكروي لحفظ تقدمك:</div>
                     <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك الكروي هنا...">
@@ -315,7 +332,6 @@
                     </button>
                 </div>
 
-                <!-- جزء الخيارات واللعب الحر والمستويات (يخفى أولاً ويظهر بعد كتابة الاسم) -->
                 <div id="game-modes-area" style="width: 100%; display: none; flex-direction: column; align-items: center; gap: 10px;">
                     <button id="resume-btn" class="btn-action" style="background: #0288d1; width: 85%; display: none;" onclick="resumeLastGame()">
                         🔄 إكمال اللعب من آخر وقوف
@@ -335,7 +351,6 @@
                 </div>
             </div>
             
-            <!-- زر الدعم يظهر هنا عند كتابة الاسم والخيارات -->
             <div class="bottom-support-wrapper">
                 <button class="btn-paypal-corner" onclick="playClickSound(); openSupportLink();">
                     💰 دعم المطور (PayPal)
@@ -351,31 +366,36 @@
                 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
                     <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
                     <div style="display: flex; gap: 5px;">
-                        <button class="btn-settings-toggle" onclick="playClickSound(); toggleSettingsMenu(true);">⚙️ الإعدادات</button>
+                        <button class="btn-settings-toggle" style="background: #555; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;" onclick="playClickSound(); toggleSettingsMenu(true);">⚙️ الإعدادات</button>
                         <button style="background: #c62828; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="exitToMainMenu()">🚪 خروج</button>
                     </div>
                 </div>
             </div>
 
+            <!-- مربع السؤال المطور بالخلفية الزجاجية -->
             <div class="question-section" id="question-text">جاري تحميل السؤال...</div>
             <div class="options-section" id="options-container"></div>
             <div class="bottom-bar" id="score-display">النقاط: 0 | السؤال: 1/50</div>
         </div>
 
-        <!-- نافذة الإعدادات المعدلة بخيار الصوت وكتمه -->
+        <!-- نافذة مكافأة استعادة قلب مجاني عند نهاية كل 10 أسئلة -->
+        <div class="overlay" id="reward-overlay" style="background-color: rgba(0,0,0,0.9);">
+            <div class="overlay-card" style="border: 2px solid #4caf50;">
+                <h2 style="color: #4caf50; margin-top:0;">❤️ مكافأة العباقرة!</h2>
+                <p style="font-size: 15px; line-height: 1.6; color: #333;" id="reward-text">لقد اجتزت محطة رئيسية في الأسئلة بنجاح! تم منحك قلب إضافي مجاني لترميم طاقتك المفقودة.</p>
+                <button class="btn-action" style="background:#4caf50;" onclick="closeRewardOverlay()">💖 شكراً، متابعة المباراة</button>
+            </div>
+        </div>
+
+        <!-- نافذة الإعدادات -->
         <div class="overlay" id="settings-overlay">
             <div class="settings-popup">
                 <h3 style="margin-top: 0; color: #333;">⚙️ إعدادات اللعبة</h3>
-                
                 <div style="margin: 15px 0; background: #eee; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: bold; color: #333;">🔊 صوت اللعبة والمؤثرات:</span>
                     <button id="audio-toggle-btn" class="btn-lvl" style="background: #2e7d32; max-width: 80px;" onclick="toggleAudioSetting()">تشغيل</button>
                 </div>
-
-                <p style="font-size: 14px; color: #666;">يمكنك دعم استمرار هذا المشروع وتطويره عبر الدفع الإلكتروني المباشر:</p>
-                <button class="btn-action" style="background-color: #ffb300; color: #111; margin-bottom: 15px;" onclick="openSupportLink();">
-                    💰 دعم المطور بواسطة PayPal
-                </button>
+                <button class="btn-action" style="background-color: #ffb300; color: #111; margin-bottom: 15px;" onclick="openSupportLink();">💰 دعم المطور بواسطة PayPal</button>
                 <button class="btn-action" style="background-color: #555;" onclick="playClickSound(); toggleSettingsMenu(false);">إغلاق الإعدادات</button>
             </div>
         </div>
@@ -384,7 +404,7 @@
         <div class="overlay" id="gameover-overlay">
             <div class="overlay-card">
                 <h2 style="color: #c62828; margin-top:0;">💔 نفدت القلوب!</h2>
-                <p style="font-size: 15px; line-height: 1.5; color: #444;">يمكنك متابعة اللعب من نفس السؤال دون خسارة نقاطك الحالية عن طريق تعبئة مخزن الطاقة الحين.</p>
+                <p style="font-size: 15px; color: #444;">يمكنك متابعة اللعب من نفس السؤال دون خسارة نقاطك الحالية عن طريق شحن طاقة اللاعب.</p>
                 <button class="btn-ad-huge" onclick="playClickSound(); startAdWorkflow()">📺 شاهد اعلان للحصول علا القلوب</button>
                 <button class="btn-action" style="background:#555; margin-top:12px;" onclick="playClickSound(); exitToMainMenu(); hideGameOver();">العودة للقائمة الرئيسية</button>
             </div>
@@ -394,20 +414,19 @@
         <div class="overlay" id="ad-playing-overlay" style="background-color: rgba(0,0,0,0.95);">
             <div class="ball-spinner">⚽</div>
             <div style="color: #ffe082; font-size: 18px; font-weight: bold;">جاري تشغيل الإعلان للحصول على الطاقة...</div>
-            <div style="color: #aaa; font-size: 13px; margin-top: 10px;">سيتم شحن الـ 5 قلوب فوراً بعد انتهاء العرض التفاعلي</div>
         </div>
 
     </div>
 
     <script>
-        // مصفوفة الـ 50 سؤالاً كاملة ومقسمة بدقة على 5 مستويات
+        // مصفوفة الأسئلة الـ 50 كاملة
         const questions = [
             // مستوى 1: مبتدئ (1 - 10)
             { q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟", options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
             { q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
-            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
+            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم？", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
             { q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟", options: ["11 لاعب", "12 لاعب", "10 لاعبين", "9 لاعبين"], correct: 0 },
-            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'Constants؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
+            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
             { q: "كم عدد بطولات كأس العالم التي فازت بها البرازيل؟", options: ["4 بطولات", "5 بطولات", "6 بطولات", "3 بطولات"], correct: 1 },
             { q: "أي فريق يلعب له النجم المصري محمد صلاح حالياً؟", options: ["تشيلسي", "ريال مدريد", "ليفربول", "مانشستر سيتي"], correct: 2 },
             { q: "ما هي الدولة التي استضافت كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
@@ -421,7 +440,7 @@
             { q: "في أي نادي ألماني اشتهر المهاجم روبرت ليفاندوفسكي قبل برشلونة؟", options: ["بايرن ميونخ", "بوروسيا دورتموند", "لايبزيغ", "شالكه"], correct: 1 },
             { q: "من هو الهداف التاريخي لكأس العالم بـ 16 هدفاً؟", options: ["بيليه", "كلوزه", "رونالدو البرازيلي", "ميسي"], correct: 1 },
             { q: "لاعب فاز بجائزة الكرة الذهبية لعام 2022؟", options: ["مودريتش", "كريم بنزيما", "مبابي", "هالاند"], correct: 1 },
-            { q: "أي بلد ينتمي إليه النجم إيرلينغ هالاند؟", options: ["السويد", "النرويج", "الدنمارك", "ألمانيا"], correct: 1 },
+            { q: "أي بلد ينتمي إليه النجم إيرلينغ هالاند？", options: ["السويد", "النرويج", "الدنمارك", "ألمانيا"], correct: 1 },
             { q: "ما هو أكبر ملعب كرة قدم في إسبانيا؟", options: ["سانتياغو برنابيو", "كامب نو", "الميتروبوليتانو", "الميستايا"], correct: 1 },
             { q: "من هو المدافع الوحيد الذي فاز بالكرة الذهبية في القرن الـ 21؟", options: ["راموس", "فان دايك", "فابيو كانافارو", "بويول"], correct: 2 },
             { q: "كم مرة فاز نادي بايرن ميونخ بدوري أبطال أوروبا؟", options: ["5 مرات", "6 مرات", "7 مرات", "4 مرات"], correct: 1 },
@@ -430,7 +449,7 @@
             { q: "أي منتخب فاز بلقب كأس أمم أوروبا (يورو 2020)؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
             { q: "من هو الهداف التاريخي لمنتخب الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ليونيل ميسي", "أغويرو"], correct: 2 },
             { q: "في أي عام تم تأسيس الاتحاد الدولي لكرة القدم (FIFA)؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
-            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية? ", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
+            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
             { q: "أي نادي إنجليزي فاز بدوري أبطال أوروبا عام 2021؟", options: ["مانشستر سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
             { q: "من سجل أسرع هاتريك في تاريخ الدوري الإنجليزي الممتاز؟", options: ["ساديو ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
             { q: "أي دولة استضافت أول بطولة لكأس العالم عام 1930؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
@@ -469,24 +488,25 @@
         let timeLeft = 10;
         let timerInterval;
         let isAnsweringBlocked = false;
-        let isAudioEnabled = true; // متغير التحكم بالصوت
+        let isAudioEnabled = true;
 
+        // تعديل زمن الـ Loading ليكون بين 5 إلى 7 ثواني (تم ضبطه على 6000 ميللي ثانية)
         window.addEventListener("DOMContentLoaded", () => {
             let fillElement = document.getElementById("load-progress");
             let progress = 0;
             let loadingInterval = setInterval(() => {
-                progress += 5;
+                progress += 2; // سرعة أبطأ لتعبئة الشريط خلال 6 ثوانٍ
                 fillElement.style.width = progress + "%";
                 if (progress >= 100) {
                     clearInterval(loadingInterval);
                     document.getElementById("loading-screen").style.display = "none";
                     changeScreen("auth-screen");
                 }
-            }, 100);
+            }, 120); 
         });
 
         function playClickSound() {
-            if (!isAudioEnabled) return; // إذا تم كتم الصوت لا يشتغل شيئ
+            if (!isAudioEnabled) return;
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
                 let osc = ctx.createOscillator();
@@ -506,12 +526,9 @@
             isAudioEnabled = !isAudioEnabled;
             let btn = document.getElementById("audio-toggle-btn");
             if (isAudioEnabled) {
-                btn.innerText = "تشغيل";
-                btn.style.background = "#2e7d32";
-                playClickSound();
+                btn.innerText = "تشغيل"; btn.style.background = "#2e7d32"; playClickSound();
             } else {
-                btn.innerText = "مكتوم";
-                btn.style.background = "#c62828";
+                btn.innerText = "مكتوم"; btn.style.background = "#c62828";
             }
         }
 
@@ -520,47 +537,31 @@
             document.getElementById(screenId).classList.add('active-screen');
         }
 
-        // إدخال تأخير تفاعلي ومحاكاة حقيقية لحفظ الحسابات عند تسجيل الدخول
         function simulateSecureAuth(provider) {
             playClickSound();
             let overlay = document.getElementById("auth-waiting-overlay");
             let text = document.getElementById("auth-waiting-text");
-            
-            if (provider === 'Google') {
-                text.innerText = "🌐 جاري الاتصال بحساب Google وتأمين التقدم...";
-            } else if (provider === 'Facebook') {
-                text.innerText = "📘 جاري مزامنة بيانات Facebook السحابية...";
-            } else {
-                text.innerText = "👤 جاري تهيئة ملف زائر مؤمن ومستقر...";
-            }
+            if (provider === 'Google') text.innerText = "🌐 جاري الاتصال بحساب Google وتأمين التقدم...";
+            else if (provider === 'Facebook') text.innerText = "📘 جاري مزامنة بيانات Facebook السحابية...";
+            else text.innerText = "👤 جاري تهيئة ملف زائر مؤمن ومستقر...";
             
             overlay.style.display = "flex";
-
             setTimeout(() => {
                 overlay.style.display = "none";
-                
-                // إعادة تصفير شكل شاشة الترحيب: يظهر الاسم أولاً، وتختفي المستويات
                 document.getElementById("name-input-area").style.display = "flex";
                 document.getElementById("game-modes-area").style.display = "none";
-                
                 let savedName = localStorage.getItem("saved_player_name") || "";
                 document.getElementById("username-input").value = savedName;
-                
                 changeScreen("welcome-screen");
-            }, 1800); // تأخير ثانية و 800 جزء لمظهر رسمي وحقيقي جداً
+            }, 1800);
         }
 
-        // يتم تشغيله عند ضغط "اعتماد الاسم والدخول للملعب"
         function confirmPlayerName() {
             playClickSound();
             let inputName = document.getElementById("username-input").value.trim();
-            if (inputName === "") {
-                alert("يرجى إدخال اسم صحيح للمتابعة!");
-                return;
-            }
+            if (inputName === "") { alert("يرجى إدخال اسم صحيح للمتابعة!"); return; }
             localStorage.setItem("saved_player_name", inputName);
             
-            // إخفاء واجهة كتابة الاسم وإظهار المستويات وبدء المباراة تحتها فوراً
             document.getElementById("name-input-area").style.display = "none";
             document.getElementById("game-modes-area").style.display = "flex";
 
@@ -574,13 +575,8 @@
         }
 
         function startBrandNewGame() {
-            playClickSound();
-            currentQuestionIndex = 0;
-            score = 0;
-            hearts = 5;
-            saveCurrentStateToStorage();
-            changeScreen('game-screen');
-            loadQuizQuestion();
+            playClickSound(); currentQuestionIndex = 0; score = 0; hearts = 5;
+            saveCurrentStateToStorage(); changeScreen('game-screen'); loadQuizQuestion();
         }
 
         function resumeLastGame() {
@@ -588,18 +584,12 @@
             currentQuestionIndex = parseInt(localStorage.getItem("saved_q_index")) || 0;
             score = parseInt(localStorage.getItem("saved_score")) || 0;
             hearts = parseInt(localStorage.getItem("saved_hearts")) || 5;
-            changeScreen('game-screen');
-            loadQuizQuestion();
+            changeScreen('game-screen'); loadQuizQuestion();
         }
 
         function selectLevelDirect(indexStart) {
-            playClickSound();
-            currentQuestionIndex = indexStart;
-            score = indexStart * 10; 
-            hearts = 5;
-            saveCurrentStateToStorage();
-            changeScreen('game-screen');
-            loadQuizQuestion();
+            playClickSound(); currentQuestionIndex = indexStart; score = indexStart * 10; hearts = 5;
+            saveCurrentStateToStorage(); changeScreen('game-screen'); loadQuizQuestion();
         }
 
         function saveCurrentStateToStorage() {
@@ -611,10 +601,8 @@
         function loadQuizQuestion() {
             if (currentQuestionIndex >= questions.length) {
                 let pName = localStorage.getItem("saved_player_name") || "البطل";
-                alert(`🏆 تهانينا يا عبقري الملاعب [${pName}]! لقد أنهيت الـ 50 سؤالاً بالكامل وتوجت بلقب البطولة النهائي!`);
-                clearSavedStorage();
-                exitToMainMenu();
-                return;
+                alert(`🏆 تهانينا يا عبقري الملاعب [${pName}]! لقد أنهيت الـ 50 سؤالاً وتوجت باللقب!`);
+                clearSavedStorage(); exitToMainMenu(); return;
             }
 
             isAnsweringBlocked = false;
@@ -663,7 +651,18 @@
                 clickedElement.classList.add("correct-answer");
                 clickedElement.innerText = "✅ " + clickedElement.innerText;
                 saveCurrentStateToStorage();
-                setTimeout(() => { currentQuestionIndex++; saveCurrentStateToStorage(); loadQuizQuestion(); }, 1200); 
+                
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    saveCurrentStateToStorage();
+                    
+                    // فحص إذا تخرج اللاعب من الـ 10 أسئلة الأولى أو الثانية إلخ لمنحه مكافأة قلب
+                    if (currentQuestionIndex > 0 && currentQuestionIndex % 10 === 0) {
+                        triggerMilestoneReward();
+                    } else {
+                        loadQuizQuestion();
+                    }
+                }, 1200); 
             } else {
                 clickedElement.classList.add("wrong-answer");
                 clickedElement.innerText = "❌ " + clickedElement.innerText;
@@ -671,6 +670,26 @@
                 buttons[activeQ.correct].innerText = "✅ " + buttons[activeQ.correct].innerText;
                 setTimeout(() => { triggerMistakeRoutine(); }, 1500);
             }
+        }
+
+        // دالة تفعيل مكافأة القلب عند نهاية كل 10 أسئلة
+        function triggerMilestoneReward() {
+            if (hearts < 5) {
+                hearts++; // تعويض قلب مفقود
+                refreshHeartsUI();
+                saveCurrentStateToStorage();
+                document.getElementById("reward-text").innerText = `كفووو! لقد اجتزت 10 أسئلة بنجاح. وبما أنك مفقود بعض القلوب، تم منحك قلب إضافي مجاني (❤️) لمساعدتك في التحدي القادم!`;
+                document.getElementById("reward-overlay").style.display = "flex";
+            } else {
+                // إذا قلوبه كاملة يدخل تلقائياً بدون تداخل واجهات
+                loadQuizQuestion();
+            }
+        }
+
+        function closeRewardOverlay() {
+            playClickSound();
+            document.getElementById("reward-overlay").style.display = "none";
+            loadQuizQuestion();
         }
 
         function triggerMistakeRoutine() {
@@ -696,32 +715,18 @@
             hideGameOver();
             document.getElementById("ad-playing-overlay").style.display = "flex";
             setTimeout(() => {
-                hearts = 5;
-                refreshHeartsUI();
-                saveCurrentStateToStorage();
+                hearts = 5; refreshHeartsUI(); saveCurrentStateToStorage();
                 document.getElementById("ad-playing-overlay").style.display = "none";
                 loadQuizQuestion();
             }, 3000); 
         }
 
-        function toggleSettingsMenu(show) {
-            document.getElementById("settings-overlay").style.display = show ? "flex" : "none";
-        }
-
-        function openSupportLink() {
-            window.open("https://www.paypal.me/diaaALAWMRA", "_blank");
-        }
-
-        function exitToMainMenu() {
-            clearInterval(timerInterval);
-            changeScreen('auth-screen');
-        }
-
+        function toggleSettingsMenu(show) { document.getElementById("settings-overlay").style.display = show ? "flex" : "none"; }
+        function openSupportLink() { window.open("https://www.paypal.me/diaaALAWMRA", "_blank"); }
+        function exitToMainMenu() { clearInterval(timerInterval); changeScreen('auth-screen'); }
         function hideGameOver() { document.getElementById("gameover-overlay").style.display = "none"; }
         function clearSavedStorage() {
-            localStorage.removeItem("saved_q_index");
-            localStorage.removeItem("saved_score");
-            localStorage.removeItem("saved_hearts");
+            localStorage.removeItem("saved_q_index"); localStorage.removeItem("saved_score"); localStorage.removeItem("saved_hearts");
         }
     </script>
 </body>
