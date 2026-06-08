@@ -1,45 +1,43 @@
 <!DOCTYPE html>
-<script>
-    // 1. ضع كود منع الرفريش أولاً مباشرة
-    document.body.addEventListener('touchmove', function(e) {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-
-    let lastY = 0;
-    document.body.addEventListener('touchstart', function(e) {
-        lastY = e.touches[0].clientY;
-    }, { passive: false });
-
-    document.body.addEventListener('touchmove', function(e) {
-        let currentY = e.touches[0].clientY;
-        if (currentY > lastY && window.scrollY === 0) {
-            e.preventDefault();
-        }
-        lastY = currentY;
-    }, { passive: false });
-
-    // 2. ثم ضع بعده مباشرة كل الدوال الخاصة باللعبة
-    // (دوال الأسئلة، المؤقت، تسجيل الدخول، إلخ...)
-    
-</script>
-
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>تحدي العباقرة الرياضي Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>تحدي العباقرة الرياضي Pro - محمي ضد الرفريش</title>
     <style>
-        html, body {
+        /* منع أي سحب أو رفريش نهائياً */
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background-color: #1b5e20;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            overscroll-behavior: none; /* يمنع الارتداد والتحديث */
+            touch-action: pan-y pinch-zoom; /* يمنع السحب العرضي */
+        }
+        
+        /* منع السحب الزائد للتحديث على الموبايل */
+        body {
+            overscroll-behavior: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
         }
         
         .game-container {
@@ -56,7 +54,8 @@
             flex-direction: column;
             justify-content: space-between;
             position: relative;
-            box-sizing: border-box;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .global-header {
@@ -73,93 +72,424 @@
             z-index: 10;
         }
 
-        .screen { display: none; flex-direction: column; justify-content: space-between; flex-grow: 1; width: 100%; z-index: 2; padding: 20px; box-sizing: border-box; }
-        .active-screen { display: flex; }
+        .refresh-warning {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #ffb300;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            text-align: center;
+            z-index: 200;
+            font-weight: bold;
+            border: 1px solid #ffb300;
+            pointer-events: none;
+        }
 
-        #loading-screen { background-color: #111; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; }
-        .loading-ball { font-size: 60px; animation: spin 1.5s linear infinite; }
-        .loading-text { color: #ffe082; font-size: 20px; font-weight: bold; }
-        .progress-bar-container { width: 70%; height: 8px; background-color: #333; border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #ffe082, #ffb300); }
+        .screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+            width: 100%;
+            z-index: 2;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        .active-screen {
+            display: flex;
+        }
 
-        .welcome-content { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; flex-grow: 1; gap: 15px; width: 100%; }
-        .avatar-container { width: 85px; height: 85px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 45px; box-shadow: 0 6px 12px rgba(0,0,0,0.4); border: 3px solid #ffe082; animation: bounce 2s infinite ease-in-out; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(15deg); } }
-        .welcome-title { font-size: 26px; font-weight: bold; color: #ffe082; text-shadow: 3px 3px 6px rgba(0,0,0,0.8); }
-        .login-btn { width: 85%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s; }
+        #loading-screen {
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+        }
+        .loading-ball {
+            font-size: 60px;
+            animation: spin 1.5s linear infinite;
+        }
+        .loading-text {
+            color: #ffe082;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .progress-bar-container {
+            width: 70%;
+            height: 8px;
+            background-color: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #444;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ffe082, #ffb300);
+            box-shadow: 0 0 8px #ffe082;
+        }
+
+        .welcome-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            gap: 15px;
+            width: 100%;
+        }
+        .avatar-container {
+            width: 85px;
+            height: 85px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 45px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            border: 3px solid #ffe082;
+            animation: bounce 2s infinite ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(15deg); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .welcome-title {
+            font-size: 26px;
+            font-weight: bold;
+            color: #ffe082;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            margin: 0 0 10px 0;
+        }
+        .login-btn {
+            width: 85%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
         .login-google { background-color: #ffffff; color: #757575; }
         .login-facebook { background-color: #1877f2; color: #ffffff; }
         .btn-guest { background-color: #cfd8dc; color: #37474f; }
-        
-        .name-input { width: 85%; padding: 14px; border: 2px solid #ffe082; border-radius: 12px; font-size: 16px; text-align: center; background: rgba(255, 255, 255, 0.9); font-weight: bold; outline: none; }
-        .level-select-container { display: flex; gap: 8px; width: 85%; justify-content: space-between; margin-top: 5px; }
+        .login-btn:active, .btn-action:active, .btn-opt:active { transform: scale(0.97); }
+
+        .bottom-support-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn-paypal-corner {
+            background-color: #ffb300;
+            color: #111;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .name-input {
+            width: 85%;
+            padding: 14px;
+            border: 2px solid #ffe082;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            color: #111;
+            font-weight: bold;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .level-select-container {
+            display: flex; gap: 8px; width: 85%; justify-content: space-between; margin-top: 5px;
+        }
         .btn-lvl { flex: 1; padding: 10px 5px; font-size: 12px; background: #37474f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background-color: rgba(0,0,0,0.7); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.15); }
-        .stat-box { background-color: #ffe082; color: #111; padding: 4px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .stat-box {
+            background-color: #ffe082;
+            color: #111;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 12px;
+        }
         .timer-box { color: #ff5252; font-size: 22px; font-weight: bold; }
         .hearts { color: #ff1744; font-size: 18px; letter-spacing: 2px; }
 
-        .question-section { text-align: center; font-size: 20px; font-weight: bold; color: white; margin: 15px 0; flex-grow: 1; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.65)); backdrop-filter: blur(10px); padding: 25px; border-radius: 20px; border: 2px solid rgba(255, 224, 130, 0.4); }
+        .question-section {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            margin: 15px 0;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.65));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+            border: 2px solid rgba(255, 224, 130, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
         .options-section { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .btn-opt { background-color: white; color: #2e7d32; border: none; padding: 12px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-opt {
+            background-color: white; color: #2e7d32; border: none; padding: 12px;
+            border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); width: 100%; text-align: center;
+            box-sizing: border-box;
+        }
         .correct-answer { background-color: #4caf50 !important; color: white !important; }
         .wrong-answer { background-color: #f44336 !important; color: white !important; }
 
-        .overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); justify-content: center; align-items: center; flex-direction: column; z-index: 10; text-align: center; padding: 25px; }
-        .overlay-card { background: white; color: #333; padding: 22px; border-radius: 20px; width: 92%; }
-        .btn-action { background-color: #2e7d32; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; }
+        .bottom-bar {
+            background-color: rgba(0,0,0,0.7); padding: 8px; margin-top: 10px;
+            border-radius: 10px; text-align: center; color: #ffe082; font-weight: bold; font-size: 13px;
+        }
+
+        .overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85); justify-content: center; align-items: center;
+            flex-direction: column; z-index: 10; text-align: center; padding: 25px; box-sizing: border-box;
+        }
+        .overlay-card {
+            background: white; color: #333; padding: 22px; border-radius: 20px; width: 92%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); box-sizing: border-box;
+        }
+        .btn-action {
+            background-color: #2e7d32; color: white; border: none; padding: 12px;
+            border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 15px;
+        }
         .btn-ad-huge { background-color: #e65100; color: white; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; border: none; width: 100%; cursor: pointer; }
-        .ball-spinner { font-size: 50px; margin: 15px 0; animation: spin 1.2s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .ball-spinner { font-size: 50px; margin: 15px 0; display: inline-block; animation: spin 1.2s linear infinite; }
+
+        .settings-popup {
+            background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px;
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
-    <!-- بقية عناصر اللعبة كما هي في الكود السابق -->
     <div id="loading-screen">
         <div class="loading-ball">⚽</div>
         <div class="loading-text">جاري التحميل...</div>
-        <div class="progress-bar-container"><div class="progress-bar-fill" id="load-progress"></div></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="load-progress"></div>
+        </div>
     </div>
 
     <div class="game-container">
         <div class="global-header">🏆 تحدي العباقرة الرياضي 🏆</div>
-        <!-- (تم اختصار الأقسام هنا لتوفير المساحة، لكن الكود المدمج بالأسفل سيحتوي كل شيء) -->
-        <div id="auth-screen" class="screen active-screen">
+        
+        <div id="auth-screen" class="screen">
             <div class="welcome-content">
                 <div class="avatar-container">⚽</div>
                 <div class="welcome-title">تحدي العباقرة الرياضي</div>
+                <div style="color: #fff; margin-bottom: 10px; font-size: 14px;">الرجاء اختيار طريقة لتسجيل الدخول لبدء اللعب:</div>
                 <button class="login-btn login-google" onclick="simulateSecureAuth('Google')">🌐 دخول بواسطة Google</button>
                 <button class="login-btn login-facebook" onclick="simulateSecureAuth('Facebook')">📘 دخول بواسطة Facebook</button>
                 <button class="login-btn btn-guest" onclick="simulateSecureAuth('Visitor')">👤 الدخول كـ زائر مباشر</button>
             </div>
         </div>
-        <!-- (يتم وضع باقي الشاشات هنا بنفس الطريقة السابقة) -->
+
+        <div class="overlay" id="auth-waiting-overlay" style="background-color: rgba(0,0,0,0.9); z-index: 99;">
+            <div class="ball-spinner">🔄</div>
+            <div id="auth-waiting-text" style="color: #ffe082; font-size: 16px; font-weight: bold; margin-top: 10px;">جاري الاتصال بالحساب وتأمين الحفظ السحابي...</div>
+        </div>
+
+        <div id="welcome-screen" class="screen">
+            <div class="welcome-content">
+                <div class="avatar-container">🏆</div>
+                <div class="welcome-title">إعداد ملف اللاعب</div>
+                <div id="name-input-area" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <div style="color: #fff; font-size: 14px;">يرجى كتابة اسمك الكروي لحفظ تقدمك:</div>
+                    <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك الكروي هنا...">
+                    <button class="btn-action" style="background: #ffb300; color: #111; width: 85%;" onclick="confirmPlayerName()">✅ اعتماد الاسم والدخول للملعب</button>
+                </div>
+                <div id="game-modes-area" style="width: 100%; display: none; flex-direction: column; align-items: center; gap: 10px;">
+                    <button id="resume-btn" class="btn-action" style="background: #0288d1; width: 85%; display: none;" onclick="resumeLastGame()">🔄 إكمال اللعب من آخر وقوف</button>
+                    <button id="newgame-btn" class="btn-action" style="background: #689f38; width: 85%;" onclick="startBrandNewGame()">✨ بدء مباراة جديدة (سؤال 1)</button>
+                    <div style="color: #ffe082; font-weight: bold; font-size: 14px; margin-top: 10px;">🎯 أو حدد مستوى للعب الحر مباشرة:</div>
+                    <div class="level-select-container">
+                        <button class="btn-lvl" onclick="selectLevelDirect(0)">مبتدئ (1-10)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(10)">محترف (11-20)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(20)">عالمي (21-30)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(30)">خارق (31-40)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(40)">أسطوري (41-50)</button>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-support-wrapper">
+                <button class="btn-paypal-corner" onclick="playClickSound(); openSupportLink();">💰 دعم المطور (PayPal)</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div class="top-bar">
+                <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
+                <div class="timer-box" id="timer-num">10</div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                    <div class="hearts" id="hearts-display">❤️❤️❤️❤️❤️</div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-settings-toggle" style="background: #555; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;" onclick="playClickSound(); toggleSettingsMenu(true);">⚙️ الإعدادات</button>
+                        <button style="background: #c62828; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;" onclick="exitToMainMenu()">🚪 خروج</button>
+                    </div>
+                </div>
+            </div>
+            <div class="question-section" id="question-text">جاري تحميل السؤال...</div>
+            <div class="options-section" id="options-container"></div>
+            <div class="bottom-bar" id="score-display">النقاط: 0 | السؤال: 1/50</div>
+        </div>
+
+        <div class="overlay" id="reward-overlay" style="background-color: rgba(0,0,0,0.9);">
+            <div class="overlay-card" style="border: 2px solid #4caf50;">
+                <h2 style="color: #4caf50; margin-top:0;">❤️ مكافأة العباقرة!</h2>
+                <p style="font-size: 15px; line-height: 1.6; color: #333;" id="reward-text">لقد اجتزت محطة رئيسية في الأسئلة بنجاح! تم منحك قلب إضافي مجاني لترميم طاقتك المفقودة.</p>
+                <button class="btn-action" style="background:#4caf50;" onclick="closeRewardOverlay()">💖 شكراً، متابعة المباراة</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="settings-overlay">
+            <div class="settings-popup">
+                <h3 style="margin-top: 0; color: #333;">⚙️ إعدادات اللعبة</h3>
+                <div style="margin: 15px 0; background: #eee; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #333;">🔊 صوت اللعبة والمؤثرات:</span>
+                    <button id="audio-toggle-btn" class="btn-lvl" style="background: #2e7d32; max-width: 80px;" onclick="toggleAudioSetting()">تشغيل</button>
+                </div>
+                <button class="btn-action" style="background-color: #ffb300; color: #111; margin-bottom: 15px;" onclick="openSupportLink();">💰 دعم المطور بواسطة PayPal</button>
+                <button class="btn-action" style="background-color: #555;" onclick="playClickSound(); toggleSettingsMenu(false);">إغلاق الإعدادات</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="gameover-overlay">
+            <div class="overlay-card">
+                <h2 style="color: #c62828; margin-top:0;">💔 نفدت القلوب!</h2>
+                <p style="font-size: 15px; color: #444;">يمكنك متابعة اللعب من نفس السؤال دون خسارة نقاطك الحالية عن طريق شحن طاقة اللاعب.</p>
+                <button class="btn-ad-huge" onclick="playClickSound(); startAdWorkflow()">📺 شاهد اعلان للحصول على القلوب</button>
+                <button class="btn-action" style="background:#555; margin-top:12px;" onclick="playClickSound(); exitToMainMenu(); hideGameOver();">العودة للقائمة الرئيسية</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="ad-playing-overlay" style="background-color: rgba(0,0,0,0.95);">
+            <div class="ball-spinner">⚽</div>
+            <div style="color: #ffe082; font-size: 18px; font-weight: bold;">جاري تشغيل الإعلان للحصول على الطاقة...</div>
+        </div>
+
+        <div class="refresh-warning">🛡️ اللعبة محمية ضد الرفريش - تقدمك محفوظ تلقائياً!</div>
     </div>
 
     <script>
-        // --- كود منع الرفريش الجذري ---
-        document.body.addEventListener('touchmove', function(e) {
-            if (e.touches.length > 1) e.preventDefault();
-        }, { passive: false });
+        // مصفوفة الأسئلة الكاملة (الـ 50 سؤال)
+        const questions = [
+            { q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟", options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
+            { q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
+            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
+            { q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟", options: ["11 لاعب", "12 لاعب", "10 لاعبين", "9 لاعبين"], correct: 0 },
+            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
+            { q: "كم عدد بطولات كأس العالم التي فازت بها البرازيل؟", options: ["4 بطولات", "5 بطولات", "6 بطولات", "3 بطولات"], correct: 1 },
+            { q: "أي فريق يلعب له النجم المصري محمد صلاح حالياً؟", options: ["تشيلسي", "ريال مدريد", "ليفربول", "مانشستر سيتي"], correct: 2 },
+            { q: "ما هي الدولة التي استضافت كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
+            { q: "كم كرت أصفر يتسبب في طرد اللاعب مباشرة بعده؟", options: ["كرت واحد", "كرتين", "3 كروت", "لا يطرد"], correct: 1 },
+            { q: "ما هو الفريق الإنجليزي المعروف بلقب 'الشياطين الحمر'؟", options: ["أرسنال", "ليفربول", "مانشستر يونايتد", "تشيلسي"], correct: 2 },
+            { q: "من هو اللاعب الملقب بالـ 'ظاهرة'؟", options: ["رونالدينيو", "رونالدو نازاريو", "كريستيانو", "روماريو"], correct: 1 },
+            { q: "أي نادي إيطالي يلقب بـ 'السيدة العجوز'؟", options: ["ميلان", "إنتر ميلان", "يوفنتوس", "روما"], correct: 2 },
+            { q: "من هو المدرب التاريخي لنادي مانشستر يونايتد الذي اعتزل عام 2013؟", options: ["مورينيو", "أليكس فيرغسون", "غوارديولا", "فينغر"], correct: 1 },
+            { q: "في أي نادي ألماني اشتهر المهاجم روبرت ليفاندوفسكي قبل برشلونة؟", options: ["بايرن ميونخ", "بوروسيا دورتموند", "لايبزيغ", "شالكه"], correct: 1 },
+            { q: "من هو الهداف التاريخي لكأس العالم بـ 16 هدفاً؟", options: ["بيليه", "كلوزه", "رونالدو البرازيلي", "ميسي"], correct: 1 },
+            { q: "لاعب فاز بجائزة الكرة الذهبية لعام 2022؟", options: ["مودريتش", "كريم بنزيما", "مبابي", "هالاند"], correct: 1 },
+            { q: "أي بلد ينتمي إليه النجم إيرلينغ هالاند؟", options: ["السويد", "النرويج", "الدنمارك", "ألمانيا"], correct: 1 },
+            { q: "ما هو أكبر ملعب كرة قدم في إسبانيا؟", options: ["سانتياغو برنابيو", "كامب نو", "الميتروبوليتانو", "الميستايا"], correct: 1 },
+            { q: "من هو المدافع الوحيد الذي فاز بالكرة الذهبية في القرن الـ 21؟", options: ["راموس", "فان دايك", "فابيو كانافارو", "بويول"], correct: 2 },
+            { q: "كم مرة فاز نادي بايرن ميونخ بدوري أبطال أوروبا؟", options: ["5 مرات", "6 مرات", "7 مرات", "4 مرات"], correct: 1 },
+            { q: "أي منتخب فاز بلقب كأس أمم أوروبا (يورو 2020)؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ليونيل ميسي", "أغويرو"], correct: 2 },
+            { q: "في أي عام تم تأسيس الاتحاد الدولي لكرة القدم (FIFA)؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
+            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
+            { q: "أي نادي إنجليزي فاز بدوري أبطال أوروبا عام 2021؟", options: ["مانشستر سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
+            { q: "من سجل أسرع هاتريك في تاريخ الدوري الإنجليزي الممتاز؟", options: ["ساديو ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
+            { q: "أي دولة استضافت أول بطولة لكأس العالم عام 1930؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
+            { q: "من هو الهداف التاريخي للدوري الإسباني (La Liga)؟", options: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
+            { q: "ما هو النادي البرتغالي الذي نشأ فيه كريستيانو رونالدو؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
+            { q: "كم عدد ألقاب دوري أبطال أوروبا التي يملكها ميلان الإيطالي؟", options: ["5 ألقاب", "7 ألقاب", "9 ألقاب", "6 ألقاب"], correct: 1 },
+            { q: "من اللاعب الذي شارك في أكبر عدد مباريات بتاريخ كأس العالم؟", options: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], correct: 1 },
+            { q: "نادي إنجليزي فاز بالدوري بدون أي خسارة عام 2004؟", options: ["مانشستر يونايتد", "تشيلسي", "أرسنال", "مانشستر سيتي"], correct: 2 },
+            { q: "من المدرب الذي فاز بدوري الأبطال 3 مرات متتالية مع الريال؟", options: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب فرنسا؟", options: ["هنري", "جيرو", "مبابي", "بلاتيني"], correct: 1 },
+            { q: "أي نادٍ أوروبي فاز بالسداسية التاريخية عام 2009؟", options: ["ريال مدريد", "بايرن ميونخ", "برشلونة", "مانشستر يونايتد"], correct: 2 },
+            { q: "ما هو المنتخب الآسيوي الذي وصل لنصف نهائي كأس العالم 2002؟", options: ["اليابان", "السعودية", "كوريا الجنوبية", "إيران"], correct: 2 },
+            { q: "من هو هداف الدوري الإنجليزي التاريخي برصيد 260 هدفاً؟", options: ["روني", "ألان شيرر", "هنري", "هاري كين"], correct: 1 },
+            { q: "في أي نادٍ فرنسي بدأ رونالدينيو مسيرته في قارة أوروبا؟", options: ["باريس سان جيرمان", "موناكو", "مارسيليا", "ليون"], correct: 0 },
+            { q: "من هو اللاعب الذي فاز بأكبر عدد من ألقاب كأس العالم عبر التاريخ؟", options: ["مارادونا", "بيليه", "رونالدو نازاريو", "زيدان"], correct: 1 },
+            { q: "أي فريق فاز بأول نسخة من دوري أبطال أوروبا بنظامها الحديث عام 1993؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
+            { q: "من هو اللاعب الذي سجل 91 هدفاً في سنة ميلادية واحدة (2012)؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
+            { q: "أي نادٍ إيطالي فاز بالثلاثية التاريخية عام 2010 مع المدرب مورينيو؟", options: ["يوفنتوس", "ميلان", "إنتر ميلان", "روما"], correct: 2 },
+            { q: "ما هو اللقب الشهير لمنتخب كولومبيا لكرة القدم؟", options: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], correct: 2 },
+            { q: "من هو أول لاعب يسجل في 5 بطولات كأس عالم مختلفة؟", options: ["ميسي", "كريستيانو رونالدو", "كلوزه", "بيليه"], correct: 1 },
+            { q: "أي منتخب فاز بكأس العالم 1966 التي أقيمت على أرض إنجلترا؟", options: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
+            { q: "من هو الهداف التاريخي لمنتخب إسبانيا؟", options: ["راؤول", "ديفيد فيا", "توريس", "إنييستا"], correct: 1 },
+            { q: "من هو الحارس الوحيد في تاريخ كرة القدم الفائز بالكرة الذهبية؟", options: ["بوفون", "كاسياس", "ليف ياشين", "نوير"], correct: 2 },
+            { q: "كم عدد ألقاب دوري أبطال أوروبا التي حققها ليفربول الإنجليزي؟", options: ["5 ألقاب", "6 ألقاب", "7 ألقاب", "8 ألقاب"], correct: 1 },
+            { q: "أي نادٍ فاز بلقب الدوري الإيطالي لموسم 2023 بعد غياب 33 سنة؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
+            { q: "من هو صاحب أسرع هدف في تاريخ كأس العالم بعد 11 ثانية فقط؟", options: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], correct: 0 }
+        ];
 
-        let lastY = 0;
-        document.body.addEventListener('touchstart', function(e) {
-            lastY = e.touches[0].clientY;
-        }, { passive: false });
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let hearts = 5;
+        let timeLeft = 10;
+        let timerInterval;
+        let isAnsweringBlocked = false;
+        let isAudioEnabled = true;
 
-        document.body.addEventListener('touchmove', function(e) {
-            let currentY = e.touches[0].clientY;
-            if (currentY > lastY && window.scrollY === 0) {
-                e.preventDefault();
-            }
-            lastY = currentY;
-        }, { passive: false });
-        // --- نهاية كود منع الرفريش ---
-
-        // (يتم وضع بقية دوال اللعبة الخاصة بك هنا...)
-        // ... (باقي كود الجافا سكريبت من ردي السابق)
-    </script>
-</body>
-</html>
+        // ========== حماية الرفريش للموبايل 100% ==========
+        
+        // 1. منع سحب الشاشة للأسفل (الرفريش) على الموبايل
+        document
