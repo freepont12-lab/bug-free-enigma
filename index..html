@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي العباقرة الرياضي</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            background-color: #2e7d32; /* اللون الأخضر اللي بالصورة */
+            width: 100%;
+            max-width: 400px;
+            height: 90vh;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .stat-box {
+            background-color: #b0bec5;
+            color: #111;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .timer-box {
+            color: #ff1744;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .hearts {
+            color: #ff1744;
+            font-size: 24px;
+        }
+        .question-section {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 20px 0;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            padding-bottom: 10px;
+        }
+        .options-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .option-btn {
+            background-color: white;
+            color: #2e7d32;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+        .bottom-bar {
+            text-align: center;
+            font-size: 18px;
+            color: #ffe082;
+            font-weight: bold;
+        }
+        /* النافذة المنبثقة للرسائل وشحن القلوب */
+        .overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            border-radius: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-content: 10;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .overlay-content {
+            background-color: white;
+            color: #333;
+            padding: 25px;
+            border-radius: 15px;
+            width: 80%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .overlay-content h2 {
+            margin-top: 0;
+        }
+        .overlay-btn {
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .ad-btn {
+            background-color: #8d6e63;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="top-bar">
+            <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
+            <div class="timer-box">الوقت:<br><span id="timer-num">10</span></div>
+            <div class="hearts" id="hearts-display">❤️❤️❤️</div>
+        </div>
+
+        <div class="question-section" id="question-text">
+            جاري تحميل السؤال الأول...
+        </div>
+
+        <div class="options-section" id="options-container">
+            </div>
+
+        <div class="bottom-bar" id="score-display">
+            النقاط: 0 | السؤال: 1/10
+        </div>
+
+        <div class="overlay" id="message-overlay">
+            <div class="overlay-content">
+                <h2 id="overlay-title">إجابة صحيحة!</h2>
+                <p id="overlay-body">يا وحش كمل الحماس!</p>
+                <button class="overlay-btn" onclick="closeOverlay()">حسناً</button>
+            </div>
+        </div>
+
+        <div class="overlay" id="gameover-overlay">
+            <div style="color: white; width: 90%;">
+                <h1 style="color: #ff1744; font-size: 32px;">???? انتهت القلوب!</h1>
+                <p style="font-size: 18px;">يمكنك شحن المحاولات ومتابعة اللعب مجاناً</p>
+                <button class="ad-btn" onclick="simulateAd()">???? مشاهدة إعلان وشحن القلوب</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // بنك الأسئلة
+        const questions = [
+            {
+                q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟",
+                options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"],
+                correct: 1
+            },
+            {
+                q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟",
+                options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"],
+                correct: 2
+            },
+            {
+                q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟",
+                options: ["40 دقيقة", "45 دقيقة", "50 دقيقة", "60 دقيقة"],
+                correct: 1
+            },
+            {
+                q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟",
+                options: ["10 لاعبين", "11 لاعب", "12 لاعب", "9 لاعبين"],
+                correct: 1
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let hearts = 3;
+        let timeLeft = 10;
+        let timerInterval;
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            hearts = 3;
+            updateHeartsDisplay();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                alert("مبروك! أنهيت كل الأسئلة بنجاح!");
+                startGame();
+                return;
+            }
+
+            timeLeft = 10;
+            document.getElementById("timer-num").innerText = timeLeft;
+            clearInterval(timerInterval);
+            startTimer();
+
+            let currentQuestion = questions[currentQuestionIndex];
+            document.getElementById("question-text").innerText = currentQuestion.q;
+            document.getElementById("score-display").innerText = `النقاط: ${score} | السؤال: ${currentQuestionIndex + 1}/${questions.length}`;
+            
+            let optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = "";
+
+            currentQuestion.options.forEach((option, index) => {
+                let button = document.createElement("button");
+                button.className = "option-btn";
+                button.innerText = option;
+                button.onclick = () => checkAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer-num").innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    wrongAnswer("انتهى الوقت!");
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selectedIndex) {
+            clearInterval(timerInterval);
+            let currentQuestion = questions[currentQuestionIndex];
+            if (selectedIndex === currentQuestion.correct) {
+                score += 10;
+                document.getElementById("overlay-title").innerText = "✅ إجابة صحيحة يا وحش!";
+                document.getElementById("overlay-body").innerText = "تستحق النقاط، استمر!";
+                document.getElementById("message-overlay").style.display = "flex";
+            } else {
+                wrongAnswer("إجابة خاطئة!");
+            }
+        }
+
+        function wrongAnswer(reason) {
+            hearts--;
+            updateHeartsDisplay();
+            if (hearts <= 0) {
+                document.getElementById("gameover-overlay").style.display = "flex";
+            } else {
+                document.getElementById("overlay-title").innerText = `❌ ${reason}`;
+                document.getElementById("overlay-body").innerText = "خسرت قلباً، حاول التركيز في السؤال القادم.";
+                document.getElementById("message-overlay").style.display = "flex";
+            }
+        }
+
+        function updateHeartsDisplay() {
+            let heartStr = "";
+            for(let i=0; i<hearts; i++) { heartStr += "❤️"; }
+            document.getElementById("hearts-display").innerText = heartStr || "💔";
+        }
+
+        function closeOverlay() {
+            document.getElementById("message-overlay").style.display = "none";
+            currentQuestionIndex++;
+            showQuestion();
+        }
+
+        function simulateAd() {
+            alert("يتم الآن تحميل وتشغيل إعلان مكافأة AdMob بمجرد تفعيله...");
+            // هنا بالمستقبل بنحط كود الإعلان الحقيقي تبعك
+            document.getElementById("gameover-overlay").style.style.display = "none";
+            hearts = 3;
+            updateHeartsDisplay();
+            showQuestion();
+        }
+
+        // تشغيل اللعبة فور تحميل الصفحة
+        window.onload = startGame;
+    </script>
+</body>
+</html>
