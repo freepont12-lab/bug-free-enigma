@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>تحدي العباقرة الرياضي Pro</title>
     <style>
-        /* إعدادات الملعب الكامل وإخفاء الحواف */
         html, body {
             margin: 0;
             padding: 0;
@@ -49,7 +48,7 @@
             display: flex;
         }
 
-        /* 1. شاشة التحميل البدئية الجيدة */
+        /* شاشة التحميل البدئية بالشريط الذهبي */
         #loading-screen {
             background-color: #111;
             display: flex;
@@ -69,7 +68,6 @@
             color: #ffe082;
             font-size: 20px;
             font-weight: bold;
-            letter-spacing: 1px;
         }
         .progress-bar-container {
             width: 70%;
@@ -87,7 +85,7 @@
             transition: width 0.1s linear;
         }
 
-        /* 2. شاشة خيارات تسجيل الدخول أولاً */
+        /* واجهات الدخول والترحيب */
         .welcome-content {
             text-align: center;
             display: flex;
@@ -142,7 +140,6 @@
         .btn-guest { background-color: #cfd8dc; color: #37474f; }
         .login-btn:active, .btn-action:active, .btn-opt:active { transform: scale(0.97); }
 
-        /* زوايا الدعم المادي */
         .bottom-support-wrapper {
             width: 100%;
             display: flex;
@@ -165,7 +162,6 @@
             gap: 5px;
         }
 
-        /* 3. شاشة إدخال الاسم وبدء اللعب الحر وعرض المستويات */
         .name-input {
             width: 85%;
             padding: 14px;
@@ -182,9 +178,9 @@
         .level-select-container {
             display: flex; gap: 8px; width: 85%; justify-content: space-between; margin-top: 5px;
         }
-        .btn-lvl { flex: 1; padding: 10px 5px; font-size: 13px; background: #37474f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-lvl { flex: 1; padding: 10px 5px; font-size: 12px; background: #37474f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* شاشة اللعب الأساسية */
+        /* شاشة المباراة والأسئلة */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -238,7 +234,7 @@
             border-radius: 10px; text-align: center; color: #ffe082; font-weight: bold; font-size: 13px;
         }
 
-        /* النوافذ المنبثقة والمعاد صياغتها بالكامل */
+        /* النوافذ المنبثقة Overlays */
         .overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.85); justify-content: center; align-items: center;
@@ -257,7 +253,6 @@
         .ball-spinner { font-size: 50px; margin: 15px 0; display: inline-block; animation: spin 1.2s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* نافذة الإعدادات */
         .settings-popup {
             background: white; padding: 20px; border-radius: 15px; width: 85%; max-width: 320px;
             text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
@@ -269,7 +264,7 @@
 </head>
 <body>
 
-    <!-- أداة شاشة التحميل بملء الشاشة مع الشريط الذهبي -->
+    <!-- شاشة التحميل البدئية -->
     <div id="loading-screen">
         <div class="loading-ball">⚽</div>
         <div class="loading-text">جاري التحميل...</div>
@@ -280,25 +275,67 @@
 
     <div class="game-container">
         
-        <!-- المرحلة 1: شاشة الدخول أولاً (جوجل / فيسبوك / زائر) -->
+        <!-- خطوة 1: خيارات تسجيل الدخول أولاً (تم حذف زر الدعم من هنا لتنظيم التدفق) -->
         <div id="auth-screen" class="screen">
             <div class="welcome-content">
                 <div class="avatar-container">⚽</div>
                 <div class="welcome-title">تحدي العباقرة الرياضي</div>
                 <div style="color: #fff; margin-bottom: 10px; font-size: 14px;">الرجاء اختيار طريقة لتسجيل الدخول لبدء اللعب:</div>
                 
-                <button class="login-btn login-google" onclick="processLogin('Google')">
+                <button class="login-btn login-google" onclick="simulateSecureAuth('Google')">
                     🌐 دخول بواسطة Google
                 </button>
-                <button class="login-btn login-facebook" onclick="processLogin('Facebook')">
+                <button class="login-btn login-facebook" onclick="simulateSecureAuth('Facebook')">
                     📘 دخول بواسطة Facebook
                 </button>
-                <button class="login-btn btn-guest" onclick="processLogin('Visitor')">
+                <button class="login-btn btn-guest" onclick="simulateSecureAuth('Visitor')">
                     👤 الدخول كـ زائر مباشر
                 </button>
             </div>
+        </div>
+
+        <!-- شاشة انتظار الحفظ والاتصال التفاعلي بالحساب -->
+        <div class="overlay" id="auth-waiting-overlay" style="background-color: rgba(0,0,0,0.9); z-index: 99;">
+            <div class="ball-spinner">🔄</div>
+            <div id="auth-waiting-text" style="color: #ffe082; font-size: 16px; font-weight: bold; margin-top: 10px;">جاري الاتصال بالحساب وتأمين الحفظ السحابي...</div>
+        </div>
+
+        <!-- خطوة 2: كتابة الاسم وتأكيده أولاً قبل إظهار الأزرار والمستويات -->
+        <div id="welcome-screen" class="screen">
+            <div class="welcome-content">
+                <div class="avatar-container">🏆</div>
+                <div class="welcome-title" id="welcome-user-title">إعداد ملف اللاعب</div>
+                
+                <!-- جزء إدخال الاسم البدئي -->
+                <div id="name-input-area" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <div style="color: #fff; font-size: 14px;">يرجى كتابة اسمك الكروي لحفظ تقدمك:</div>
+                    <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك الكروي هنا...">
+                    <button class="btn-action" style="background: #ffb300; color: #111; width: 85%;" onclick="confirmPlayerName()">
+                        ✅ اعتماد الاسم والدخول للملعب
+                    </button>
+                </div>
+
+                <!-- جزء الخيارات واللعب الحر والمستويات (يخفى أولاً ويظهر بعد كتابة الاسم) -->
+                <div id="game-modes-area" style="width: 100%; display: none; flex-direction: column; align-items: center; gap: 10px;">
+                    <button id="resume-btn" class="btn-action" style="background: #0288d1; width: 85%; display: none;" onclick="resumeLastGame()">
+                        🔄 إكمال اللعب من آخر وقوف
+                    </button>
+                    <button id="newgame-btn" class="btn-action" style="background: #689f38; width: 85%;" onclick="startBrandNewGame()">
+                        ✨ بدء مباراة جديدة (سؤال 1)
+                    </button>
+
+                    <div style="color: #ffe082; font-weight: bold; font-size: 14px; margin-top: 10px;">🎯 أو حدد مستوى للعب الحر مباشرة:</div>
+                    <div class="level-select-container">
+                        <button class="btn-lvl" onclick="selectLevelDirect(0)">مبتدئ (1-10)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(10)">محترف (11-20)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(20)">عالمي (21-30)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(30)">خارق (31-40)</button>
+                        <button class="btn-lvl" onclick="selectLevelDirect(40)">أسطوري (41-50)</button>
+                    </div>
+                </div>
+            </div>
             
-            <!-- الدعم المادي مثبت في زاوية الشاشة من تحت أول ما يسجل -->
+            <!-- زر الدعم يظهر هنا عند كتابة الاسم والخيارات -->
             <div class="bottom-support-wrapper">
                 <button class="btn-paypal-corner" onclick="playClickSound(); openSupportLink();">
                     💰 دعم المطور (PayPal)
@@ -306,33 +343,7 @@
             </div>
         </div>
 
-        <!-- المرحلة 2: شاشة إدخال الاسم وبدء أنماط اللعب الحر والمستويات -->
-        <div id="welcome-screen" class="screen">
-            <div class="welcome-content">
-                <div class="avatar-container">🏆</div>
-                <div class="welcome-title" id="welcome-user-title">مرحباً بك عبقري الملاعب</div>
-                
-                <!-- مستطيل إدخال الاسم المعرف بدون رسائل منبثقة مزعجة -->
-                <input type="text" id="username-input" class="name-input" placeholder="اكتب اسمك الكروي هنا لمتابعة اللعب...">
-                
-                <!-- أزرار التحكم بحالة اللعب وحفظ التقدم -->
-                <button id="resume-btn" class="btn-action" style="background: #0288d1; width: 85%; display: none;" onclick="resumeLastGame()">
-                    🔄 إكمال اللعب من آخر وقوف
-                </button>
-                <button id="newgame-btn" class="btn-action" style="background: #689f38; width: 85%;" onclick="startBrandNewGame()">
-                    ✨ بدء مباراة جديدة (سؤال 1)
-                </button>
-
-                <div style="color: #ffe082; font-weight: bold; font-size: 14px; margin-top: 10px;">🎯 أو حدد مستوى للعب الحر مباشرة:</div>
-                <div class="level-select-container">
-                    <button class="btn-lvl" onclick="selectLevelDirect(0)">مبتدئ (1-10)</button>
-                    <button class="btn-lvl" onclick="selectLevelDirect(10)">محترف (11-20)</button>
-                    <button class="btn-lvl" onclick="selectLevelDirect(20)">أسطورة (21-50)</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- المرحلة 3: شاشة واجهة اللعب الأساسية والمباريات -->
+        <!-- شاشة اللعب والأسئلة -->
         <div id="game-screen" class="screen">
             <div class="top-bar">
                 <div class="stat-box">المستوى<br><span id="level-num">1</span></div>
@@ -351,10 +362,16 @@
             <div class="bottom-bar" id="score-display">النقاط: 0 | السؤال: 1/50</div>
         </div>
 
-        <!-- منبثقة الإعدادات وبداخلها زر الدعم المادي -->
+        <!-- نافذة الإعدادات المعدلة بخيار الصوت وكتمه -->
         <div class="overlay" id="settings-overlay">
             <div class="settings-popup">
                 <h3 style="margin-top: 0; color: #333;">⚙️ إعدادات اللعبة</h3>
+                
+                <div style="margin: 15px 0; background: #eee; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #333;">🔊 صوت اللعبة والمؤثرات:</span>
+                    <button id="audio-toggle-btn" class="btn-lvl" style="background: #2e7d32; max-width: 80px;" onclick="toggleAudioSetting()">تشغيل</button>
+                </div>
+
                 <p style="font-size: 14px; color: #666;">يمكنك دعم استمرار هذا المشروع وتطويره عبر الدفع الإلكتروني المباشر:</p>
                 <button class="btn-action" style="background-color: #ffb300; color: #111; margin-bottom: 15px;" onclick="openSupportLink();">
                     💰 دعم المطور بواسطة PayPal
@@ -363,17 +380,17 @@
             </div>
         </div>
 
-        <!-- منبثقة انتهاء القلوب ونظام شحن الطاقة بالإعلانات -->
+        <!-- نافذة انتهاء القلوب -->
         <div class="overlay" id="gameover-overlay">
             <div class="overlay-card">
                 <h2 style="color: #c62828; margin-top:0;">💔 نفدت القلوب!</h2>
-                <p style="font-size: 15px; line-height: 1.5; color: #444;">يمكنك متابعة اللعب من نفس السؤال دون خسارة نقاطك الحالية عن طريق تعبئة محزن الطاقة الحين.</p>
+                <p style="font-size: 15px; line-height: 1.5; color: #444;">يمكنك متابعة اللعب من نفس السؤال دون خسارة نقاطك الحالية عن طريق تعبئة مخزن الطاقة الحين.</p>
                 <button class="btn-ad-huge" onclick="playClickSound(); startAdWorkflow()">📺 شاهد اعلان للحصول علا القلوب</button>
                 <button class="btn-action" style="background:#555; margin-top:12px;" onclick="playClickSound(); exitToMainMenu(); hideGameOver();">العودة للقائمة الرئيسية</button>
             </div>
         </div>
 
-        <!-- منبثقة شاشة تشغيل الإعلان المحاكي التفاعلي -->
+        <!-- شاشة الإعلان المحاكي التفاعلي -->
         <div class="overlay" id="ad-playing-overlay" style="background-color: rgba(0,0,0,0.95);">
             <div class="ball-spinner">⚽</div>
             <div style="color: #ffe082; font-size: 18px; font-weight: bold;">جاري تشغيل الإعلان للحصول على الطاقة...</div>
@@ -383,20 +400,21 @@
     </div>
 
     <script>
-        // مصفوفة الـ 50 سؤال الكاملة والموزعة بدقة 
+        // مصفوفة الـ 50 سؤالاً كاملة ومقسمة بدقة على 5 مستويات
         const questions = [
-            // المستوى 1: مبتدئ (1-10)
+            // مستوى 1: مبتدئ (1 - 10)
             { q: "من هو الهداف التاريخي لبطولة دوري أبطال أوروبا؟", options: ["ميسي", "كريستيانو رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
             { q: "أي منتخب فاز بطولة كأس العالم 2022 في قطر؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
-            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم？", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
+            { q: "ما هي مدة الشوط الواحد الأصلي في مباراة كرة القدم؟", options: ["45 دقيقة", "50 دقيقة", "60 دقيقة", "30 دقيقة"], correct: 0 },
             { q: "كم عدد اللاعبين الأساسيين لفريق كرة القدم داخل الملعب؟", options: ["11 لاعب", "12 لاعب", "10 لاعبين", "9 لاعبين"], correct: 0 },
-            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'？", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
+            { q: "ما هو النادي الإسباني الملقب بـ 'الملكي'Constants؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو مدريد", "فالنسيا"], correct: 1 },
             { q: "كم عدد بطولات كأس العالم التي فازت بها البرازيل؟", options: ["4 بطولات", "5 بطولات", "6 بطولات", "3 بطولات"], correct: 1 },
             { q: "أي فريق يلعب له النجم المصري محمد صلاح حالياً؟", options: ["تشيلسي", "ريال مدريد", "ليفربول", "مانشستر سيتي"], correct: 2 },
             { q: "ما هي الدولة التي استضافت كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
             { q: "كم كرت أصفر يتسبب في طرد اللاعب مباشرة بعده؟", options: ["كرت واحد", "كرتين", "3 كروت", "لا يطرد"], correct: 1 },
             { q: "ما هو الفريق الإنجليزي المعروف بلقب 'الشياطين الحمر'؟", options: ["أرسنال", "ليفربول", "مانشستر يونايتد", "تشيلسي"], correct: 2 },
-            // المستوى 2: محترف (11-20)
+
+            // مستوى 2: محترف (11 - 20)
             { q: "من هو اللاعب الملقب بالـ 'ظاهرة'؟", options: ["رونالدينيو", "رونالدو نازاريو", "كريستيانو", "روماريو"], correct: 1 },
             { q: "أي نادي إيطالي يلقب بـ 'السيدة العجوز'؟", options: ["ميلان", "إنتر ميلان", "يوفنتوس", "روما"], correct: 2 },
             { q: "من هو المدرب التاريخي لنادي مانشستر يونايتد الذي اعتزل عام 2013؟", options: ["مورينيو", "أليكس فيرغسون", "غوارديولا", "فينغر"], correct: 1 },
@@ -407,39 +425,42 @@
             { q: "ما هو أكبر ملعب كرة قدم في إسبانيا؟", options: ["سانتياغو برنابيو", "كامب نو", "الميتروبوليتانو", "الميستايا"], correct: 1 },
             { q: "من هو المدافع الوحيد الذي فاز بالكرة الذهبية في القرن الـ 21؟", options: ["راموس", "فان دايك", "فابيو كانافارو", "بويول"], correct: 2 },
             { q: "كم مرة فاز نادي بايرن ميونخ بدوري أبطال أوروبا؟", options: ["5 مرات", "6 مرات", "7 مرات", "4 مرات"], correct: 1 },
-            // المستوى 3: عالمي (21-30)
+
+            // مستوى 3: عالمي (21 - 30)
             { q: "أي منتخب فاز بلقب كأس أمم أوروبا (يورو 2020)؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
             { q: "من هو الهداف التاريخي لمنتخب الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ليونيل ميسي", "أغويرو"], correct: 2 },
             { q: "في أي عام تم تأسيس الاتحاد الدولي لكرة القدم (FIFA)؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
-            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
+            { q: "من هو اللاعب الأفريقي الوحيد الذي فاز بالكرة الذهبية? ", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
             { q: "أي نادي إنجليزي فاز بدوري أبطال أوروبا عام 2021؟", options: ["مانشستر سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
             { q: "من سجل أسرع هاتريك في تاريخ الدوري الإنجليزي الممتاز؟", options: ["ساديو ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
             { q: "أي دولة استضافت أول بطولة لكأس العالم عام 1930؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
             { q: "من هو الهداف التاريخي للدوري الإسباني (La Liga)؟", options: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
             { q: "ما هو النادي البرتغالي الذي نشأ فيه كريستيانو رونالدو؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
             { q: "كم عدد ألقاب دوري أبطال أوروبا التي يملكها ميلان الإيطالي؟", options: ["5 ألقاب", "7 ألقاب", "9 ألقاب", "6 ألقاب"], correct: 1 },
-            // المستوى 4: خارق (31-40)
+
+            // مستوى 4: خارق (31 - 40)
             { q: "من اللاعب الذي شارك في أكبر عدد مباريات بتاريخ كأس العالم؟", options: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], correct: 1 },
             { q: "نادي إنجليزي فاز بالدوري بدون أي خسارة عام 2004؟", options: ["مانشستر يونايتد", "تشيلسي", "أرسنال", "مانشستر سيتي"], correct: 2 },
             { q: "من المدرب الذي فاز بدوري الأبطال 3 مرات متتالية مع الريال؟", options: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], correct: 1 },
             { q: "من هو الهداف التاريخي لمنتخب فرنسا؟", options: ["هنري", "جيرو", "مبابي", "بلاتيني"], correct: 1 },
             { q: "أي نادٍ أوروبي فاز بالسداسية التاريخية عام 2009؟", options: ["ريال مدريد", "بايرن ميونخ", "برشلونة", "مانشستر يونايتد"], correct: 2 },
-            { q: "ما هو المنتخب الآسيوي الذي وصل لنصف نهائي كأس العالم 2002？", options: ["اليابان", "السعودية", "كوريا الجنوبية", "إيران"], correct: 2 },
-            { q: "من هو هداف الدوري الإنجليزي التاريخي بـ 260 هدفاً؟", options: ["روني", "ألان شيرر", "هنري", "هاري كين"], correct: 1 },
-            { q: "في أي نادٍ فرنسي بدأ رونالدينيو مسيرته في أوروبا؟", options: ["باريس سان جيرمان", "موناكو", "مارسيليا", "ليون"], correct: 0 },
-            { q: "من هو اللاعب الذي فاز بأكبر عدد من ألقاب كأس العالم؟", options: ["مارادونا", "بيليه", "رونالدو البرازيلي", "زيدان"], correct: 1 },
-            { q: "أي فريق فاز بأول نسخة من دوري أبطال أوروبا بنظامها الحديث 1993؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
-            // المستوى 5: أسطوري (41-50)
-            { q: "من هو اللاعب الذي سجل 91 هدفاً في سنة ميلادية واحدة؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
-            { q: "أي نادٍ إيطالي فاز بالثلاثية التاريخية عام 2010 مع مورينيو؟", options: ["يوفنتوس", "ميلان", "إنتر ميلان", "روما"], correct: 2 },
-            { q: "ما هو لقب منتخب كولومبيا لكرة القدم؟", options: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], correct: 2 },
+            { q: "ما هو المنتخب الآسيوي الذي وصل لنصف نهائي كأس العالم 2002؟", options: ["اليابان", "السعودية", "كوريا الجنوبية", "إيران"], correct: 2 },
+            { q: "من هو هداف الدوري الإنجليزي التاريخي برصيد 260 هدفاً؟", options: ["روني", "ألان شيرر", "هنري", "هاري كين"], correct: 1 },
+            { q: "في أي نادٍ فرنسي بدأ رونالدينيو مسيرته في قارة أوروبا؟", options: ["باريس سان جيرمان", "موناكو", "مارسيليا", "ليون"], correct: 0 },
+            { q: "من هو اللاعب الذي فاز بأكبر عدد من ألقاب كأس العالم عبر التاريخ؟", options: ["مارادونا", "بيليه", "رونالدو نازاريو", "زيدان"], correct: 1 },
+            { q: "أي فريق فاز بأول نسخة من دوري أبطال أوروبا بنظامها الحديث عام 1993؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
+
+            // مستوى 5: أسطوري (41 - 50)
+            { q: "من هو اللاعب الذي سجل 91 هدفاً في سنة ميلادية واحدة (2012)؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
+            { q: "أي نادٍ إيطالي فاز بالثلاثية التاريخية عام 2010 مع المدرب مورينيو؟", options: ["يوفنتوس", "ميلان", "إنتر ميلان", "روما"], correct: 2 },
+            { q: "ما هو اللقب الشهير لمنتخب كولومبيا لكرة القدم؟", options: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], correct: 2 },
             { q: "من هو أول لاعب يسجل في 5 بطولات كأس عالم مختلفة؟", options: ["ميسي", "كريستيانو رونالدو", "كلوزه", "بيليه"], correct: 1 },
-            { q: "أي منتخب فاز بكأس العالم 1966 التي أقيمت في إنجلترا؟", options: ["ألمانيا الغربية", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
+            { q: "أي منتخب فاز بكأس العالم 1966 التي أقيمت على أرض إنجلترا؟", options: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
             { q: "من هو الهداف التاريخي لمنتخب إسبانيا؟", options: ["راؤول", "ديفيد فيا", "توريس", "إنييستا"], correct: 1 },
             { q: "من هو الحارس الوحيد في تاريخ كرة القدم الفائز بالكرة الذهبية؟", options: ["بوفون", "كاسياس", "ليف ياشين", "نوير"], correct: 2 },
-            { q: "كم عدد ألقاب دوري أبطال أوروبا التي حققها ليفربول؟", options: ["5 ألقاب", "6 ألقاب", "7 ألقاب", "4 ألقاب"], correct: 1 },
-            { q: "أي نادي فاز بلقب الدوري الإيطالي لموسم 2023 بعد غياب 33 سنة؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
-            { q: "من هو الهداف التاريخي لبطولات كأس العالم للمنتخبات برصيد 16 هدفاً؟", options: ["ميروسلاف كلوزه", "رونالدو البرازيلي", "بيليه", "ميسي"], correct: 0 }
+            { q: "كم عدد ألقاب دوري أبطال أوروبا التي حققها ليفربول الإنجليزي؟", options: ["5 ألقاب", "6 ألقاب", "7 ألقاب", "8 ألقاب"], correct: 1 },
+            { q: "أي نادٍ فاز بلقب الدوري الإيطالي لموسم 2023 بعد غياب 33 سنة؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
+            { q: "من هو صاحب أسرع هدف في تاريخ كأس العالم بعد 11 ثانية فقط؟", options: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], correct: 0 }
         ];
 
         let currentQuestionIndex = 0;
@@ -448,8 +469,8 @@
         let timeLeft = 10;
         let timerInterval;
         let isAnsweringBlocked = false;
+        let isAudioEnabled = true; // متغير التحكم بالصوت
 
-        // ميكانيكية شاشة التحميل التلقائية (تعبئة الشريط الذهبي) عند فتح اللعبة مباشرة
         window.addEventListener("DOMContentLoaded", () => {
             let fillElement = document.getElementById("load-progress");
             let progress = 0;
@@ -459,13 +480,13 @@
                 if (progress >= 100) {
                     clearInterval(loadingInterval);
                     document.getElementById("loading-screen").style.display = "none";
-                    // إظهار شاشة اختيار طريقة تسجيل الدخول أولاً بحسب طلبك
                     changeScreen("auth-screen");
                 }
             }, 100);
         });
 
         function playClickSound() {
+            if (!isAudioEnabled) return; // إذا تم كتم الصوت لا يشتغل شيئ
             try {
                 let ctx = new (window.AudioContext || window.webkitAudioContext)();
                 let osc = ctx.createOscillator();
@@ -481,22 +502,68 @@
             } catch(e) {}
         }
 
+        function toggleAudioSetting() {
+            isAudioEnabled = !isAudioEnabled;
+            let btn = document.getElementById("audio-toggle-btn");
+            if (isAudioEnabled) {
+                btn.innerText = "تشغيل";
+                btn.style.background = "#2e7d32";
+                playClickSound();
+            } else {
+                btn.innerText = "مكتوم";
+                btn.style.background = "#c62828";
+            }
+        }
+
         function changeScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
             document.getElementById(screenId).classList.add('active-screen');
         }
 
-        // معالجة الضغط على زر تسجيل الدخول أولاً، ثم الانتقال لشاشة الاسم والبدء
-        function processLogin(method) {
+        // إدخال تأخير تفاعلي ومحاكاة حقيقية لحفظ الحسابات عند تسجيل الدخول
+        function simulateSecureAuth(provider) {
             playClickSound();
-            // استرجاع الاسم المحفوظ مسبقاً إذا كان موجوداً
-            let savedName = localStorage.getItem("saved_player_name") || "";
-            document.getElementById("username-input").value = savedName;
-
-            // الانتقال للشاشة التالية لكتابة الاسم وتأكيد البدء
-            changeScreen("welcome-screen");
+            let overlay = document.getElementById("auth-waiting-overlay");
+            let text = document.getElementById("auth-waiting-text");
             
-            // التحقق من حالة اللعبة المحفوظة لإظهار زر الإكمال أو إخفائه
+            if (provider === 'Google') {
+                text.innerText = "🌐 جاري الاتصال بحساب Google وتأمين التقدم...";
+            } else if (provider === 'Facebook') {
+                text.innerText = "📘 جاري مزامنة بيانات Facebook السحابية...";
+            } else {
+                text.innerText = "👤 جاري تهيئة ملف زائر مؤمن ومستقر...";
+            }
+            
+            overlay.style.display = "flex";
+
+            setTimeout(() => {
+                overlay.style.display = "none";
+                
+                // إعادة تصفير شكل شاشة الترحيب: يظهر الاسم أولاً، وتختفي المستويات
+                document.getElementById("name-input-area").style.display = "flex";
+                document.getElementById("game-modes-area").style.display = "none";
+                
+                let savedName = localStorage.getItem("saved_player_name") || "";
+                document.getElementById("username-input").value = savedName;
+                
+                changeScreen("welcome-screen");
+            }, 1800); // تأخير ثانية و 800 جزء لمظهر رسمي وحقيقي جداً
+        }
+
+        // يتم تشغيله عند ضغط "اعتماد الاسم والدخول للملعب"
+        function confirmPlayerName() {
+            playClickSound();
+            let inputName = document.getElementById("username-input").value.trim();
+            if (inputName === "") {
+                alert("يرجى إدخال اسم صحيح للمتابعة!");
+                return;
+            }
+            localStorage.setItem("saved_player_name", inputName);
+            
+            // إخفاء واجهة كتابة الاسم وإظهار المستويات وبدء المباراة تحتها فوراً
+            document.getElementById("name-input-area").style.display = "none";
+            document.getElementById("game-modes-area").style.display = "flex";
+
             let savedIndex = localStorage.getItem("saved_q_index");
             if (savedIndex !== null && parseInt(savedIndex) > 0) {
                 document.getElementById("resume-btn").style.display = "block";
@@ -506,47 +573,27 @@
             }
         }
 
-        // التحقق من الاسم عند الضغط على بدء اللعب لمنع الحقول الفارغة بدون تنبيهات منبثقة
-        function validateAndGetName() {
-            let inputName = document.getElementById("username-input").value.trim();
-            if (inputName === "") {
-                // بدلاً من الـ alert، نقوم بوضع اسم افتراضي تلقائي لضمان سلاسة تجربة المستخدم
-                inputName = "عبقري الملاعب";
-                document.getElementById("username-input").value = inputName;
-            }
-            localStorage.setItem("saved_player_name", inputName);
-            return inputName;
-        }
-
         function startBrandNewGame() {
             playClickSound();
-            validateAndGetName();
-            
             currentQuestionIndex = 0;
             score = 0;
             hearts = 5;
             saveCurrentStateToStorage();
-            
             changeScreen('game-screen');
             loadQuizQuestion();
         }
 
         function resumeLastGame() {
             playClickSound();
-            validateAndGetName();
-
             currentQuestionIndex = parseInt(localStorage.getItem("saved_q_index")) || 0;
             score = parseInt(localStorage.getItem("saved_score")) || 0;
             hearts = parseInt(localStorage.getItem("saved_hearts")) || 5;
-            
             changeScreen('game-screen');
             loadQuizQuestion();
         }
 
         function selectLevelDirect(indexStart) {
             playClickSound();
-            validateAndGetName();
-
             currentQuestionIndex = indexStart;
             score = indexStart * 10; 
             hearts = 5;
