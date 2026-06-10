@@ -1,120 +1,830 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحدي العباقرة</title>
-    <style>
-        body { font-family: sans-serif; background: #1b5e20; color: white; text-align: center; margin: 0; padding: 0; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#111; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; }
-        .spinner { font-size: 60px; animation: spin 1.5s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .screen { display: none; padding: 20px; }
-        .active { display: block; }
-        .btn { display: block; width: 85%; margin: 10px auto; padding: 15px; background: #ffb300; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: black; }
-        input { padding: 12px; width: 80%; border-radius: 10px; border: none; margin-bottom: 10px; }
-    </style>
-</head>
-<body>
+import { useState, useEffect, useRef } from "react";
 
-<div id="loader"><div class="spinner">⚽</div><p>جاري التحميل...</p></div>
+// ===== CONSTANTS =====
+const LEVELS = [
+  { id: 1, name: "ط³ظ‡ظ„", emoji: "ًںں¢", color: "#22c55e", questions: 10 },
+  { id: 2, name: "ظ…طھظˆط³ط·", emoji: "ًںں،", color: "#eab308", questions: 10 },
+  { id: 3, name: "ط¹ط§ط¯ظٹ", emoji: "ًںں ", color: "#f97316", questions: 10 },
+  { id: 4, name: "طµط¹ط¨", emoji: "ًں”´", color: "#ef4444", questions: 10 },
+  { id: 5, name: "ط®ط¨ظٹط±", emoji: "ًں’€", color: "#a855f7", questions: 10 },
+];
 
-<div id="login-screen" class="screen active">
-    <h1>تحدي العباقرة</h1>
-    <button class="btn" onclick="alert('تم ربط حسابك')">تسجيل دخول جوجل / فيسبوك</button>
-    <button class="btn" onclick="showScreen('name-screen')">دخول كزائر</button>
-</div>
+const MAX_HEARTS = 5;
+const POINTS_PER_CORRECT = 10;
+const HEART_COST = 100;
+const PAYPAL_LINK = "https://paypal.me/diaaALAWMRA";
 
-<div id="name-screen" class="screen">
-    <input type="text" id="username" placeholder="أدخل اسمك الكريم">
-    <button class="btn" onclick="startGame()">بدء التحدي</button>
-</div>
+// ===== SOUNDS =====
+function playClick() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 800; g.gain.value = 0.1;
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+    o.stop(ctx.currentTime + 0.1);
+  } catch {}
+}
+function playCorrect() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [600, 800, 1000].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f; g.gain.value = 0.1;
+      o.start(ctx.currentTime + i * 0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.1 + 0.15);
+      o.stop(ctx.currentTime + i * 0.1 + 0.15);
+    });
+  } catch {}
+}
+function playWrong() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = "sawtooth"; o.frequency.value = 200; g.gain.value = 0.1;
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+    o.stop(ctx.currentTime + 0.3);
+  } catch {}
+}
 
-<div id="game-screen" class="screen">
-    <h3 id="q-text"></h3>
-    <div id="options-div"></div>
-    <button class="btn" onclick="showScreen('shop-screen')">المتجر & الإعدادات</button>
-</div>
+// ===== STORAGE =====
+function loadState() {
+  try {
+    const s = localStorage.getItem("fq_state");
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+function saveState(s) {
+  try { localStorage.setItem("fq_state", JSON.stringify(s)); } catch {}
+}
+function loadLeaderboard() {
+  try {
+    const l = localStorage.getItem("fq_leaders");
+    return l ? JSON.parse(l) : [];
+  } catch { return []; }
+}
+function saveLeaderboard(entries) {
+  try { localStorage.setItem("fq_leaders", JSON.stringify(entries)); } catch {}
+}
+function loadLastReward() {
+  try { return localStorage.getItem("fq_last_reward") || null; } catch { return null; }
+}
+function saveLastReward(d) {
+  try { localStorage.setItem("fq_last_reward", d); } catch {}
+}
 
-<div id="shop-screen" class="screen">
-    <h3>المتجر والمكافآت</h3>
-    <button class="btn" onclick="getDaily()">🎁 مكافأة يومية (قلب)</button>
-    <button class="btn" onclick="toggleSound()">🔊 الصوت: <span id="s-stat">ON</span></button>
-    <p>لدعم المطور:</p>
-    <a href="https://www.paypal.com/paypalme/YOUR_PAYPAL_LINK" target="_blank" style="color:yellow;">اضغط هنا لدعمي عبر PayPal</a>
-    <button class="btn" style="background:#444; color:white;" onclick="showScreen('game-screen')">رجوع</button>
-</div>
+// ===== MAIN APP =====
+export default function App() {
+  const [screen, setScreen] = useState("splash"); // splash > login > menu > game > result > leaderboard > store > settings
+  const [player, setPlayer] = useState(null);
+  const [soundOn, setSoundOn] = useState(true);
+  const [hearts, setHearts] = useState(MAX_HEARTS);
+  const [points, setPoints] = useState(0);
+  const [currentLevel, setCurrentLevel] = useState(1);
+  const [savedProgress, setSavedProgress] = useState(null);
+  const [leaderboard, setLeaderboard] = useState(loadLeaderboard());
+  const soundRef = useRef(true);
+  soundRef.current = soundOn;
 
-<script>
-    const questions = [
-        { q: "الهداف التاريخي لدوري الأبطال؟", o: ["ميسي", "رونالدو", "ليفاندوفسكي", "بنزيما"], c: 1 },
-        { q: "بطل مونديال 2022؟", o: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], c: 2 },
-        { q: "عدد لاعبي كرة القدم الأساسيين؟", o: ["10", "11", "9", "12"], c: 1 },
-        { q: "النادي الملكي؟", o: ["برشلونة", "ريال مدريد", "أتلتيكو", "فالنسيا"], c: 1 },
-        { q: "ألقاب البرازيل؟", o: ["4", "5", "6", "3"], c: 1 },
-        { q: "فريق صلاح؟", o: ["تشيلسي", "سيتي", "ليفربول", "يونايتد"], c: 2 },
-        { q: "مونديال 2010؟", o: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], c: 1 },
-        { q: "من هو الظاهرة؟", o: ["رونالدينيو", "رونالدو", "كريستيانو", "روماريو"], c: 1 },
-        { q: "لقب السيدة العجوز؟", o: ["ميلان", "إنتر", "يوفنتوس", "روما"], c: 2 },
-        { q: "مدرب فيرغسون؟", o: ["مورينيو", "فيرغسون", "غوارديولا", "فينغر"], c: 1 },
-        { q: "فريق ليفاندوفسكي قبل برشلونة؟", o: ["بايرن", "دورتموند", "لايبزيغ", "شالكه"], c: 0 },
-        { q: "هداف المونديال؟", o: ["بيليه", "كلوزه", "رونالدو", "ميسي"], c: 1 },
-        { q: "الكرة الذهبية 2022؟", o: ["مودريتش", "بنزيما", "مبابي", "هالاند"], c: 1 },
-        { q: "جنسية هالاند؟", o: ["سويدي", "نرويجي", "دنماركي", "ألماني"], c: 1 },
-        { q: "ملعب الريال؟", o: ["برنابيو", "كامب نو", "ميتروبوليتانو", "الميستايا"], c: 0 },
-        { q: "مدافع فاز بالكرة الذهبية؟", o: ["راموس", "فان دايك", "كانافارو", "بويول"], c: 2 },
-        { q: "ألقاب بايرن في الأبطال؟", o: ["5", "6", "7", "4"], c: 1 },
-        { q: "بطل يورو 2020؟", o: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], c: 1 },
-        { q: "هداف الأرجنتين؟", o: ["مارادونا", "باتيستوتا", "ميسي", "أغويرو"], c: 2 },
-        { q: "تأسيس فيفا؟", o: ["1904", "1920", "1930", "1899"], c: 0 },
-        { q: "أفريقي فاز بالكرة الذهبية؟", o: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], c: 2 },
-        { q: "بطل أبطال 2021؟", o: ["سيتي", "تشيلسي", "ليفربول", "توتنهام"], c: 1 },
-        { q: "أسرع هاتريك؟", o: ["ماني", "صلاح", "أغويرو", "ستيرلينغ"], c: 0 },
-        { q: "أول مستضيف للمونديال؟", o: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], c: 2 },
-        { q: "هداف الدوري الإسباني؟", o: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], c: 1 },
-        { q: "نادي رونالدو الأول؟", o: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], c: 2 },
-        { q: "ألقاب ميلان بالأبطال؟", o: ["5", "7", "9", "6"], c: 1 },
-        { q: "أكثر من شارك بالمونديال؟", o: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], c: 0 },
-        { q: "فريق فاز بالدوري بلا هزيمة 2004؟", o: ["يونايتد", "تشيلسي", "أرسنال", "سيتي"], c: 2 },
-        { q: "مدرب ثلاثية الريال؟", o: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], c: 1 },
-        { q: "هداف فرنسا؟", o: ["هنري", "جيرو", "مبابي", "بلاتيني"], c: 1 },
-        { q: "فريق السداسية 2009؟", o: ["ريال مدريد", "بايرن", "برشلونة", "يونايتد"], c: 2 },
-        { q: "منتخب وصل لنصف نهائي 2002؟", o: ["اليابان", "السعودية", "كوريا", "إيران"], c: 2 },
-        { q: "هداف الإنجليزي التاريخي؟", o: ["روني", "شيرر", "هنري", "هاري كين"], c: 1 },
-        { q: "نادي رونالدينيو الأول؟", o: ["باريس", "موناكو", "مارسيليا", "ليون"], c: 0 },
-        { q: "أكثر لاعب فاز بكأس العالم؟", o: ["مارادونا", "بيليه", "رونالدو", "زيدان"], c: 1 },
-        { q: "بطل 1993 بالأبطال؟", o: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], c: 2 },
-        { q: "صاحب 91 هدفاً بسنة؟", o: ["رونالدو", "ميسي", "بيليه", "مولر"], c: 1 },
-        { q: "بطل ثلاثية 2010؟", o: ["يوفنتوس", "ميلان", "إنتر", "روما"], c: 2 },
-        { q: "لقب كولومبيا؟", o: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], c: 2 },
-        { q: "سجل في 5 مونديالات؟", o: ["ميسي", "رونالدو", "كلوزه", "بيليه"], c: 1 },
-        { q: "بطل مونديال 1966؟", o: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], c: 1 },
-        { q: "هداف إسبانيا؟", o: ["راؤول", "فيا", "توريس", "إنييستا"], c: 1 },
-        { q: "حارس فاز بالكرة الذهبية؟", o: ["بوفون", "كاسياس", "ياشين", "نوير"], c: 2 },
-        { q: "ألقاب ليفربول؟", o: ["5", "6", "7", "8"], c: 1 },
-        { q: "بطل إيطاليا 2023؟", o: ["ميلان", "إنتر", "نابولي", "لاتسيو"], c: 2 },
-        { q: "أسرع هدف مونديالي؟", o: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], c: 0 },
-        { q: "حارس الأخطبوط؟", o: ["كاسياس", "ياشين", "بوفون", "كان"], c: 2 },
-        { q: "أكبر نتيجة مونديالية؟", o: ["10-1", "9-0", "8-0", "7-0"], c: 1 },
-        { q: "ملعب نهائي 2022؟", o: ["لوسيل", "البيت", "خليفة", "الثمامة"], c: 0 }
-    ];
+  const beep = (fn) => { if (soundRef.current) fn(); };
 
-    window.onload = () => setTimeout(() => document.getElementById('loader').style.display = 'none', 2000);
-    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-    function startGame() { showScreen('game-screen'); loadQ(0); }
-    function loadQ(i) { 
-        let q = questions[i]; 
-        document.getElementById('q-text').innerText = (i+1) + "- " + q.q;
-        let d = document.getElementById('options-div'); d.innerHTML = "";
-        q.o.forEach((opt, idx) => {
-            let b = document.createElement('button'); b.className = 'btn'; b.innerText = opt;
-            b.onclick = () => { if(i < questions.length-1) loadQ(i+1); else alert("انتهت اللعبة!"); };
-            d.appendChild(b);
-        });
+  // Splash screen timer
+  useEffect(() => {
+    if (screen === "splash") {
+      const t = setTimeout(() => setScreen("login"), 5000);
+      return () => clearTimeout(t);
     }
-    let sound = true;
-    function toggleSound() { sound = !sound; document.getElementById('s-stat').innerText = sound ? 'ON' : 'OFF'; }
-    function getDaily() { alert("تم إضافة قلب واحد لرصيدك!"); }
-</script>
-</body>
-</html>
+  }, [screen]);
+
+  // Load saved state on login
+  const handleLogin = (name) => {
+    const saved = loadState();
+    setPlayer(name);
+    if (saved && saved.player === name) {
+      setHearts(saved.hearts ?? MAX_HEARTS);
+      setPoints(saved.points ?? 0);
+      setCurrentLevel(saved.currentLevel ?? 1);
+      setSavedProgress(saved.progress || null);
+    } else {
+      setHearts(MAX_HEARTS);
+      setPoints(0);
+      setCurrentLevel(1);
+      setSavedProgress(null);
+    }
+    setScreen("menu");
+  };
+
+  const persistState = (h, p, lv, prog) => {
+    saveState({ player, hearts: h, points: p, currentLevel: lv, progress: prog });
+  };
+
+  const updateLeaderboard = (name, pts) => {
+    const lb = loadLeaderboard();
+    const existing = lb.findIndex(e => e.name === name);
+    if (existing >= 0) { if (pts > lb[existing].points) lb[existing].points = pts; }
+    else lb.push({ name, points: pts });
+    lb.sort((a, b) => b.points - a.points);
+    const top = lb.slice(0, 20);
+    saveLeaderboard(top);
+    setLeaderboard(top);
+  };
+
+  if (screen === "splash") return <SplashScreen />;
+  if (screen === "login") return <LoginScreen onLogin={handleLogin} beep={() => beep(playClick)} />;
+  if (screen === "menu") return (
+    <MenuScreen
+      player={player} hearts={hearts} points={points} currentLevel={currentLevel}
+      savedProgress={savedProgress}
+      onPlay={(lvl, resume) => { beep(playClick); setScreen("game"); setCurrentLevel(lvl); }}
+      onStore={() => { beep(playClick); setScreen("store"); }}
+      onLeaderboard={() => { beep(playClick); setScreen("leaderboard"); }}
+      onSettings={() => { beep(playClick); setScreen("settings"); }}
+      beep={() => beep(playClick)}
+    />
+  );
+  if (screen === "game") return (
+    <GameScreen
+      player={player} level={currentLevel} hearts={hearts} points={points}
+      savedProgress={savedProgress}
+      soundOn={soundOn}
+      onCorrect={(newPts) => { beep(playCorrect); setPoints(newPts); }}
+      onWrong={(newHearts) => { beep(playWrong); setHearts(newHearts); }}
+      onLevelComplete={(newPts, nextLvl, prog) => {
+        setPoints(newPts); setCurrentLevel(nextLvl);
+        setSavedProgress(prog);
+        persistState(hearts, newPts, nextLvl, prog);
+        updateLeaderboard(player, newPts);
+      }}
+      onGameOver={(finalPts) => {
+        setPoints(finalPts); setHearts(0);
+        persistState(0, finalPts, currentLevel, null);
+        updateLeaderboard(player, finalPts);
+        setScreen("result");
+      }}
+      onFinish={(finalPts) => {
+        setPoints(finalPts);
+        persistState(hearts, finalPts, 5, null);
+        updateLeaderboard(player, finalPts);
+        setScreen("result");
+      }}
+      onSave={(h, p, lv, prog) => { setHearts(h); setPoints(p); setCurrentLevel(lv); setSavedProgress(prog); persistState(h, p, lv, prog); }}
+      onBack={() => { beep(playClick); setScreen("menu"); }}
+    />
+  );
+  if (screen === "result") return (
+    <ResultScreen
+      player={player} points={points} hearts={hearts}
+      onRestart={() => { setHearts(MAX_HEARTS); setPoints(0); setCurrentLevel(1); setSavedProgress(null); setScreen("game"); }}
+      onMenu={() => setScreen("menu")}
+      beep={() => beep(playClick)}
+    />
+  );
+  if (screen === "leaderboard") return <LeaderboardScreen data={leaderboard} onBack={() => { beep(playClick); setScreen("menu"); }} />;
+  if (screen === "store") return (
+    <StoreScreen
+      points={points} hearts={hearts}
+      onBuyHeart={() => {
+        if (points >= HEART_COST && hearts < MAX_HEARTS) {
+          beep(playCorrect);
+          const nh = Math.min(hearts + 1, MAX_HEARTS);
+          const np = points - HEART_COST;
+          setHearts(nh); setPoints(np);
+          persistState(nh, np, currentLevel, savedProgress);
+        } else beep(playWrong);
+      }}
+      onDailyReward={() => {
+        const today = new Date().toDateString();
+        const last = loadLastReward();
+        if (last !== today) {
+          beep(playCorrect);
+          const nh = Math.min(hearts + 1, MAX_HEARTS);
+          setHearts(nh);
+          saveLastReward(today);
+          persistState(nh, points, currentLevel, savedProgress);
+          return true;
+        } else { beep(playWrong); return false; }
+      }}
+      onBack={() => { beep(playClick); setScreen("menu"); }}
+    />
+  );
+  if (screen === "settings") return (
+    <SettingsScreen
+      soundOn={soundOn}
+      onToggleSound={() => { setSoundOn(s => !s); beep(playClick); }}
+      onBack={() => { beep(playClick); setScreen("menu"); }}
+    />
+  );
+  return null;
+}
+
+// ===== SPLASH =====
+function SplashScreen() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setProgress(p => Math.min(p + 2, 100)), 100);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <div style={styles.splash}>
+      <div style={styles.ballWrap}>
+        <div style={{ ...styles.ball, animation: "spin 1s linear infinite" }}>âڑ½</div>
+      </div>
+      <h1 style={styles.splashTitle}>ظƒظˆظٹط² ظƒط±ط© ط§ظ„ظ‚ط¯ظ…</h1>
+      <p style={styles.splashSub}>ط§ط®طھط¨ط± ظ…ط¹ظ„ظˆظ…ط§طھظƒ ط§ظ„ظƒط±ظˆظٹط©</p>
+      <div style={styles.loadBar}>
+        <div style={{ ...styles.loadFill, width: `${progress}%` }} />
+      </div>
+      <p style={styles.loadText}>ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„... {progress}%</p>
+      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+    </div>
+  );
+}
+
+// ===== LOGIN =====
+function LoginScreen({ onLogin, beep }) {
+  const [name, setName] = useState("");
+  const [step, setStep] = useState("method"); // method | name
+  const [method, setMethod] = useState("");
+
+  const handleMethod = (m) => { beep(); setMethod(m); setStep("name"); };
+  const handleSubmit = () => {
+    const n = name.trim() || (method === "guest" ? "ط²ط§ط¦ط±" : "ظ„ط§ط¹ط¨");
+    beep(); onLogin(n);
+  };
+
+  return (
+    <div style={styles.center}>
+      <div style={styles.card}>
+        <div style={{ fontSize: 56, textAlign: "center" }}>âڑ½</div>
+        <h2 style={styles.cardTitle}>ظ…ط±ط­ط¨ط§ظ‹ ط¨ظƒ!</h2>
+        {step === "method" ? (
+          <>
+            <p style={styles.sub}>ط§ط®طھط± ط·ط±ظٹظ‚ط© ط§ظ„ط¯ط®ظˆظ„</p>
+            <button style={{ ...styles.btn, background: "#4285F4" }} onClick={() => handleMethod("google")}>
+              ًں”µ ط§ظ„ط¯ط®ظˆظ„ ط¨ط¬ظˆط¬ظ„
+            </button>
+            <button style={{ ...styles.btn, background: "#1877F2", marginTop: 10 }} onClick={() => handleMethod("facebook")}>
+              ًں“ک ط§ظ„ط¯ط®ظˆظ„ ط¨ظپظٹط³ط¨ظˆظƒ
+            </button>
+            <button style={{ ...styles.btn, background: "#555", marginTop: 10 }} onClick={() => handleMethod("guest")}>
+              ًں‘¤ ط§ظ„ط¯ط®ظˆظ„ ظƒط²ط§ط¦ط±
+            </button>
+          </>
+        ) : (
+          <>
+            <p style={styles.sub}>ظ…ط§ ط§ط³ظ…ظƒ ظٹط§ ط¨ط·ظ„طں</p>
+            <input
+              style={styles.input}
+              placeholder="ط£ط¯ط®ظ„ ط§ط³ظ…ظƒ..."
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              autoFocus
+              dir="rtl"
+            />
+            <button style={{ ...styles.btn, background: "#16a34a", marginTop: 12 }} onClick={handleSubmit}>
+              ط§ط¨ط¯ط£ ط§ظ„ظ„ط¹ط¨ â–¶
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ===== MENU =====
+function MenuScreen({ player, hearts, points, currentLevel, savedProgress, onPlay, onStore, onLeaderboard, onSettings, beep }) {
+  return (
+    <div style={styles.screen}>
+      <div style={styles.topBar}>
+        <span style={styles.playerName}>ًں‘¤ {player}</span>
+        <div style={styles.stats}>
+          <span style={styles.statBadge}>â‌¤ï¸ڈ {hearts}/{MAX_HEARTS}</span>
+          <span style={styles.statBadge}>â­گ {points}</span>
+        </div>
+      </div>
+
+      <div style={{ textAlign: "center", padding: "20px 0 10px" }}>
+        <div style={{ fontSize: 64 }}>âڑ½</div>
+        <h1 style={{ color: "#fff", fontSize: 24, margin: "8px 0 4px" }}>ظƒظˆظٹط² ظƒط±ط© ط§ظ„ظ‚ط¯ظ…</h1>
+        <p style={{ color: "#94a3b8", fontSize: 14 }}>ط§ط®طھط± ظ…ط³طھظˆط§ظƒ ظˆط§ط¨ط¯ط£ ط§ظ„طھط­ط¯ظٹ</p>
+      </div>
+
+      <div style={styles.levelGrid}>
+        {LEVELS.map(lv => (
+          <button
+            key={lv.id}
+            style={{ ...styles.levelBtn, borderColor: lv.color, opacity: hearts === 0 ? 0.5 : 1 }}
+            onClick={() => hearts > 0 && onPlay(lv.id)}
+          >
+            <span style={{ fontSize: 24 }}>{lv.emoji}</span>
+            <span style={{ color: lv.color, fontWeight: "bold", fontSize: 14 }}>{lv.name}</span>
+            <span style={{ color: "#94a3b8", fontSize: 11 }}>10 ط£ط³ط¦ظ„ط©</span>
+          </button>
+        ))}
+      </div>
+
+      {savedProgress && (
+        <button style={{ ...styles.btn, background: "#0ea5e9", marginBottom: 8 }} onClick={() => onPlay(currentLevel, true)}>
+          â–¶ ط§ط³طھظƒظ…ط§ظ„ ظ…ظ† ط§ظ„ظ…ط³طھظˆظ‰ {LEVELS[currentLevel - 1]?.name}
+        </button>
+      )}
+
+      {hearts === 0 && <p style={{ color: "#ef4444", textAlign: "center", fontSize: 13 }}>â‌¤ï¸ڈ ط§ظ†طھظ‡طھ ظ‚ظ„ظˆط¨ظƒ! ط§ط´طھط±ظٹ ظ…ظ† ط§ظ„ظ…طھط¬ط±</p>}
+
+      <div style={styles.navRow}>
+        <button style={styles.navBtn} onClick={onStore}>ًںڈھ<br /><span>ظ…طھط¬ط±</span></button>
+        <button style={styles.navBtn} onClick={onLeaderboard}>ًںڈ†<br /><span>ط§ظ„ظ…طھطµط¯ط±ظˆظ†</span></button>
+        <button style={styles.navBtn} onClick={onSettings}>âڑ™ï¸ڈ<br /><span>ط¥ط¹ط¯ط§ط¯ط§طھ</span></button>
+      </div>
+    </div>
+  );
+}
+
+// ===== GAME =====
+function GameScreen({ player, level, hearts: initHearts, points: initPoints, savedProgress, soundOn, onCorrect, onWrong, onLevelComplete, onGameOver, onFinish, onSave, onBack }) {
+  const [questions, setQuestions] = useState([]);
+  const [qIndex, setQIndex] = useState(0);
+  const [hearts, setHearts] = useState(initHearts);
+  const [points, setPoints] = useState(initPoints);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [feedback, setFeedback] = useState(null); // correct | wrong
+
+  const levelInfo = LEVELS[level - 1];
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [level]);
+
+  async function fetchQuestions() {
+    setLoading(true); setError(null);
+    try {
+      const prompt = `ط£ظ†طھ ظ…ط³ط§ط¨ظ‚ط© ظƒط±ط© ظ‚ط¯ظ…. ط§ظƒطھط¨ 10 ط£ط³ط¦ظ„ط© ظ…ظ† ظ…ط³طھظˆظ‰ "${levelInfo.name}" ط¹ظ† ظƒط±ط© ط§ظ„ظ‚ط¯ظ… (ظ„ط§ط¹ط¨ظˆظ†طŒ ط¨ط·ظˆظ„ط§طھطŒ ط£ظ†ط¯ظٹط©طŒ طھط§ط±ظٹط®).
+ظƒظ„ ط³ط¤ط§ظ„ ظٹظƒظˆظ† ظ„ظ‡ 4 ط®ظٹط§ط±ط§طھ ظˆط¥ط¬ط§ط¨ط© طµط­ظٹط­ط© ظˆط§ط­ط¯ط©.
+ط£ط±ط¬ط¹ JSON ظپظ‚ط· ط¨ظ‡ط°ط§ ط§ظ„ط´ظƒظ„ ط¨ط¯ظˆظ† ط£ظٹ ظ†طµ ط¥ط¶ط§ظپظٹ:
+{"questions":[{"q":"ظ†طµ ط§ظ„ط³ط¤ط§ظ„","options":["ط£","ط¨","ط¬","ط¯"],"answer":0}]}
+ط­ظٹط« answer ظ‡ظˆ index ط§ظ„ط¥ط¬ط§ط¨ط© ط§ظ„طµط­ظٹط­ط© (0-3).`;
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.map(c => c.text || "").join("").replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(text);
+      setQuestions(parsed.questions);
+      setLoading(false);
+    } catch (e) {
+      setError("ظپط´ظ„ طھط­ظ…ظٹظ„ ط§ظ„ط£ط³ط¦ظ„ط©. طھط­ظ‚ظ‚ ظ…ظ† ط§ظ„ط§طھطµط§ظ„.");
+      setLoading(false);
+    }
+  }
+
+  const handleAnswer = (idx) => {
+    if (selected !== null) return;
+    setSelected(idx);
+    const q = questions[qIndex];
+    const correct = idx === q.answer;
+
+    if (correct) {
+      const bonus = streak >= 2 ? 5 : 0;
+      const newPts = points + POINTS_PER_CORRECT + bonus;
+      const newStreak = streak + 1;
+      setPoints(newPts); setStreak(newStreak);
+      setFeedback("correct");
+      onCorrect(newPts);
+      setTimeout(() => {
+        setFeedback(null); setSelected(null);
+        if (qIndex + 1 >= questions.length) {
+          // Level done
+          const nextLevel = level + 1;
+          if (nextLevel > LEVELS.length) { onFinish(newPts); }
+          else { onLevelComplete(newPts, nextLevel, null); onBack(); }
+        } else { setQIndex(i => i + 1); }
+      }, 1000);
+    } else {
+      const newHearts = hearts - 1;
+      setHearts(newHearts); setStreak(0);
+      setFeedback("wrong");
+      onWrong(newHearts);
+      setTimeout(() => {
+        setFeedback(null); setSelected(null);
+        if (newHearts <= 0) { onGameOver(points); }
+        else { setQIndex(i => i + 1 >= questions.length ? i : i + 1); }
+      }, 1000);
+    }
+  };
+
+  if (loading) return (
+    <div style={styles.center}>
+      <div style={{ fontSize: 48, animation: "spin 1s linear infinite" }}>âڑ½</div>
+      <p style={{ color: "#94a3b8", marginTop: 16 }}>ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ط£ط³ط¦ظ„ط©...</p>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={styles.center}>
+      <p style={{ color: "#ef4444" }}>{error}</p>
+      <button style={styles.btn} onClick={fetchQuestions}>ط¥ط¹ط§ط¯ط© ط§ظ„ظ…ط­ط§ظˆظ„ط©</button>
+      <button style={{ ...styles.btn, background: "#555", marginTop: 8 }} onClick={onBack}>ط±ط¬ظˆط¹</button>
+    </div>
+  );
+
+  const q = questions[qIndex];
+  const progress = ((qIndex) / questions.length) * 100;
+
+  return (
+    <div style={styles.screen}>
+      {/* Header */}
+      <div style={styles.gameHeader}>
+        <button style={styles.backBtn} onClick={() => { onSave(hearts, points, level, null); onBack(); }}>â†گ</button>
+        <div style={{ textAlign: "center" }}>
+          <span style={{ color: levelInfo.color, fontWeight: "bold" }}>{levelInfo.emoji} {levelInfo.name}</span>
+          <div style={{ color: "#94a3b8", fontSize: 12 }}>ط³ط¤ط§ظ„ {qIndex + 1} / {questions.length}</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ color: "#fff" }}>{"â‌¤ï¸ڈ".repeat(hearts)}{"ًں–¤".repeat(MAX_HEARTS - hearts)}</div>
+          <div style={{ color: "#facc15", fontSize: 12 }}>â­گ {points}</div>
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div style={styles.progressWrap}>
+        <div style={{ ...styles.progressBar, width: `${progress}%`, background: levelInfo.color }} />
+      </div>
+
+      {/* Streak */}
+      {streak >= 2 && <div style={styles.streakBadge}>ًں”¥ ط³ظ„ط³ظ„ط© {streak}! +5 ظ†ظ‚ط§ط·</div>}
+
+      {/* Feedback overlay */}
+      {feedback && (
+        <div style={{ ...styles.feedbackOverlay, background: feedback === "correct" ? "#16a34a88" : "#dc262688" }}>
+          <span style={{ fontSize: 64 }}>{feedback === "correct" ? "âœ…" : "â‌Œ"}</span>
+        </div>
+      )}
+
+      {/* Question */}
+      <div style={styles.questionCard}>
+        <p style={styles.questionText}>{q.q}</p>
+      </div>
+
+      {/* Options */}
+      <div style={styles.optionsGrid}>
+        {q.options.map((opt, i) => {
+          let bg = "#1e293b";
+          if (selected !== null) {
+            if (i === q.answer) bg = "#15803d";
+            else if (i === selected && i !== q.answer) bg = "#991b1b";
+          }
+          return (
+            <button
+              key={i}
+              style={{ ...styles.optionBtn, background: bg }}
+              onClick={() => handleAnswer(i)}
+            >
+              <span style={styles.optionLetter}>{["ط£", "ط¨", "ط¬", "ط¯"][i]}</span>
+              <span style={styles.optionText}>{opt}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ===== RESULT =====
+function ResultScreen({ player, points, hearts, onRestart, onMenu, beep }) {
+  const won = hearts > 0;
+  return (
+    <div style={styles.center}>
+      <div style={styles.card}>
+        <div style={{ fontSize: 64, textAlign: "center" }}>{won ? "ًںڈ†" : "ًںک¢"}</div>
+        <h2 style={{ ...styles.cardTitle, color: won ? "#facc15" : "#ef4444" }}>
+          {won ? "ط£ظ†ظ‡ظٹطھ ط¬ظ…ظٹط¹ ط§ظ„ظ…ط³طھظˆظٹط§طھ!" : "ط§ظ†طھظ‡طھ ظ‚ظ„ظˆط¨ظƒ!"}
+        </h2>
+        <p style={styles.sub}>ظ„ط§ط¹ط¨: {player}</p>
+        <div style={styles.resultStat}>
+          <span>â­گ ظ†ظ‚ط§ط·ظƒ ط§ظ„ظ†ظ‡ط§ط¦ظٹط©</span>
+          <span style={{ color: "#facc15", fontSize: 24, fontWeight: "bold" }}>{points}</span>
+        </div>
+        <button style={{ ...styles.btn, background: "#16a34a", marginTop: 16 }} onClick={() => { beep(); onRestart(); }}>
+          ًں”„ ط§ظ„ط¹ط¨ ظ…ظ† ط¬ط¯ظٹط¯
+        </button>
+        <button style={{ ...styles.btn, background: "#334155", marginTop: 8 }} onClick={() => { beep(); onMenu(); }}>
+          ًںڈ  ط§ظ„ظ‚ط§ط¦ظ…ط© ط§ظ„ط±ط¦ظٹط³ظٹط©
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ===== LEADERBOARD =====
+function LeaderboardScreen({ data, onBack }) {
+  return (
+    <div style={styles.screen}>
+      <div style={styles.pageHeader}>
+        <button style={styles.backBtn} onClick={onBack}>â†گ</button>
+        <h2 style={styles.pageTitle}>ًںڈ† ظ„ظˆط­ط© ط§ظ„ظ…طھطµط¯ط±ظٹظ†</h2>
+        <div />
+      </div>
+      <div style={{ padding: "0 16px", overflowY: "auto", flex: 1 }}>
+        {data.length === 0 && <p style={{ color: "#94a3b8", textAlign: "center", marginTop: 40 }}>ظ„ط§ ظٹظˆط¬ط¯ ظ„ط§ط¹ط¨ظˆظ† ط¨ط¹ط¯</p>}
+        {data.map((entry, i) => (
+          <div key={i} style={styles.leaderRow}>
+            <span style={styles.leaderRank}>
+              {i === 0 ? "ًں¥‡" : i === 1 ? "ًں¥ˆ" : i === 2 ? "ًں¥‰" : `#${i + 1}`}
+            </span>
+            <span style={styles.leaderName}>{entry.name}</span>
+            <span style={{ color: "#facc15", fontWeight: "bold" }}>â­گ {entry.points}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== STORE =====
+function StoreScreen({ points, hearts, onBuyHeart, onDailyReward, onBack }) {
+  const [msg, setMsg] = useState(null);
+  const today = new Date().toDateString();
+  const rewardClaimed = loadLastReward() === today;
+
+  const showMsg = (text, color) => {
+    setMsg({ text, color });
+    setTimeout(() => setMsg(null), 2500);
+  };
+
+  return (
+    <div style={styles.screen}>
+      <div style={styles.pageHeader}>
+        <button style={styles.backBtn} onClick={onBack}>â†گ</button>
+        <h2 style={styles.pageTitle}>ًںڈھ ط§ظ„ظ…طھط¬ط±</h2>
+        <div />
+      </div>
+
+      <div style={{ padding: 16 }}>
+        <div style={styles.statRow}>
+          <span style={{ color: "#94a3b8" }}>ظ†ظ‚ط§ط·ظƒ:</span>
+          <span style={{ color: "#facc15", fontWeight: "bold" }}>â­گ {points}</span>
+        </div>
+        <div style={styles.statRow}>
+          <span style={{ color: "#94a3b8" }}>ظ‚ظ„ظˆط¨ظƒ:</span>
+          <span style={{ color: "#ef4444", fontWeight: "bold" }}>â‌¤ï¸ڈ {hearts} / {MAX_HEARTS}</span>
+        </div>
+
+        {msg && <div style={{ ...styles.msgBox, background: msg.color }}>{msg.text}</div>}
+
+        {/* Daily reward */}
+        <div style={styles.storeItem}>
+          <div>
+            <div style={{ color: "#fff", fontWeight: "bold" }}>ًںژپ ط§ظ„ظ…ظƒط§ظپط£ط© ط§ظ„ظٹظˆظ…ظٹط©</div>
+            <div style={{ color: "#94a3b8", fontSize: 12 }}>ظ‚ظ„ط¨ ظ…ط¬ط§ظ†ظٹ ظƒظ„ ظٹظˆظ…</div>
+          </div>
+          <button
+            style={{ ...styles.smallBtn, background: rewardClaimed ? "#334155" : "#16a34a" }}
+            onClick={() => {
+              const claimed = onDailyReward();
+              if (claimed) showMsg("âœ… ط­طµظ„طھ ط¹ظ„ظ‰ ظ‚ظ„ط¨ ظ…ط¬ط§ظ†ظٹ!", "#15803d");
+              else showMsg("âڈ° ط¹ط¯ ط؛ط¯ط§ظ‹ ظ„ظ…ظƒط§ظپط£ط© ط¬ط¯ظٹط¯ط©", "#b45309");
+            }}
+            disabled={rewardClaimed}
+          >
+            {rewardClaimed ? "طھظ… ط§ظ„ط£ط®ط°" : "ط®ط° â‌¤ï¸ڈ"}
+          </button>
+        </div>
+
+        {/* Buy heart */}
+        <div style={styles.storeItem}>
+          <div>
+            <div style={{ color: "#fff", fontWeight: "bold" }}>â‌¤ï¸ڈ ط´ط±ط§ط، ظ‚ظ„ط¨</div>
+            <div style={{ color: "#94a3b8", fontSize: 12 }}>100 ظ†ظ‚ط·ط© = ظ‚ظ„ط¨ ظˆط§ط­ط¯</div>
+          </div>
+          <button
+            style={{ ...styles.smallBtn, background: points >= HEART_COST && hearts < MAX_HEARTS ? "#2563eb" : "#334155" }}
+            onClick={() => {
+              if (hearts >= MAX_HEARTS) showMsg("ظ‚ظ„ظˆط¨ظƒ ظ…ظ…طھظ„ط¦ط©!", "#b45309");
+              else if (points < HEART_COST) showMsg("ظ†ظ‚ط§ط·ظƒ ط؛ظٹط± ظƒط§ظپظٹط©!", "#991b1b");
+              else { onBuyHeart(); showMsg("âœ… طھظ… ط´ط±ط§ط، ظ‚ظ„ط¨!", "#15803d"); }
+            }}
+          >
+            ط´ط±ط§ط،
+          </button>
+        </div>
+
+        {/* PayPal */}
+        <div style={styles.devSupport}>
+          <p style={{ color: "#94a3b8", textAlign: "center", fontSize: 13, marginBottom: 10 }}>ط¯ط¹ظ… ط§ظ„ظ…ط·ظˆط±</p>
+          <a href={PAYPAL_LINK} target="_blank" rel="noopener noreferrer" style={styles.paypalBtn}>
+            ًں’™ ط¯ط¹ظ… ط¹ط¨ط± PayPal
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===== SETTINGS =====
+function SettingsScreen({ soundOn, onToggleSound, onBack }) {
+  return (
+    <div style={styles.screen}>
+      <div style={styles.pageHeader}>
+        <button style={styles.backBtn} onClick={onBack}>â†گ</button>
+        <h2 style={styles.pageTitle}>âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ</h2>
+        <div />
+      </div>
+      <div style={{ padding: 16 }}>
+        <div style={styles.settingRow}>
+          <div>
+            <div style={{ color: "#fff", fontWeight: "bold" }}>ط§ظ„ط£طµظˆط§طھ</div>
+            <div style={{ color: "#94a3b8", fontSize: 12 }}>ط£طµظˆط§طھ ط§ظ„ظ†ظ‚ط± ظˆط§ظ„ط¥ط¬ط§ط¨ط§طھ</div>
+          </div>
+          <button
+            style={{ ...styles.toggleBtn, background: soundOn ? "#16a34a" : "#334155" }}
+            onClick={onToggleSound}
+          >
+            {soundOn ? "ًں”ٹ طھط´ط؛ظٹظ„" : "ًں”‡ ط¥ظٹظ‚ط§ظپ"}
+          </button>
+        </div>
+
+        <div style={{ marginTop: 32, borderTop: "1px solid #1e293b", paddingTop: 24 }}>
+          <p style={{ color: "#94a3b8", textAlign: "center", fontSize: 13, marginBottom: 12 }}>ط¯ط¹ظ… ط§ظ„ظ…ط·ظˆط±</p>
+          <a href={PAYPAL_LINK} target="_blank" rel="noopener noreferrer" style={styles.paypalBtn}>
+            ًں’™ ط¯ط¹ظ… ط¹ط¨ط± PayPal
+          </a>
+        </div>
+
+        <p style={{ color: "#475569", textAlign: "center", fontSize: 11, marginTop: 24 }}>
+          ظƒظˆظٹط² ظƒط±ط© ط§ظ„ظ‚ط¯ظ… â€¢ ظ†ط³ط®ط© 1.0
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ===== STYLES =====
+const styles = {
+  splash: {
+    minHeight: "100vh", background: "linear-gradient(135deg,#0f172a,#1e3a2f)",
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+    fontFamily: "Arial,sans-serif", direction: "rtl"
+  },
+  ballWrap: { marginBottom: 16 },
+  ball: { fontSize: 80 },
+  splashTitle: { color: "#fff", fontSize: 32, margin: "0 0 8px", fontWeight: "bold" },
+  splashSub: { color: "#86efac", fontSize: 16, margin: "0 0 32px" },
+  loadBar: { width: 240, height: 8, background: "#1e293b", borderRadius: 4, overflow: "hidden" },
+  loadFill: { height: "100%", background: "linear-gradient(90deg,#16a34a,#4ade80)", borderRadius: 4, transition: "width 0.1s" },
+  loadText: { color: "#94a3b8", fontSize: 13, marginTop: 12 },
+
+  center: {
+    minHeight: "100vh", background: "#0f172a", display: "flex",
+    flexDirection: "column", alignItems: "center", justifyContent: "center",
+    fontFamily: "Arial,sans-serif", direction: "rtl", padding: 16
+  },
+  card: {
+    background: "#1e293b", borderRadius: 20, padding: "28px 24px",
+    width: "100%", maxWidth: 360, boxSizing: "border-box"
+  },
+  cardTitle: { color: "#fff", fontSize: 22, textAlign: "center", margin: "8px 0 4px" },
+  sub: { color: "#94a3b8", textAlign: "center", fontSize: 14, margin: "0 0 16px" },
+  btn: {
+    width: "100%", padding: "14px 0", borderRadius: 12, border: "none",
+    color: "#fff", fontSize: 16, fontWeight: "bold", cursor: "pointer",
+    display: "block", textAlign: "center"
+  },
+  input: {
+    width: "100%", padding: "12px 14px", borderRadius: 10,
+    background: "#0f172a", border: "1px solid #334155", color: "#fff",
+    fontSize: 16, boxSizing: "border-box", textAlign: "right", outline: "none"
+  },
+
+  screen: {
+    minHeight: "100vh", background: "#0f172a",
+    fontFamily: "Arial,sans-serif", direction: "rtl",
+    display: "flex", flexDirection: "column", maxWidth: 480, margin: "0 auto"
+  },
+  topBar: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "14px 16px", background: "#1e293b"
+  },
+  playerName: { color: "#fff", fontWeight: "bold", fontSize: 14 },
+  stats: { display: "flex", gap: 8 },
+  statBadge: {
+    background: "#0f172a", color: "#fff", padding: "4px 10px",
+    borderRadius: 20, fontSize: 13
+  },
+  levelGrid: {
+    display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10,
+    padding: "0 16px 10px"
+  },
+  levelBtn: {
+    background: "#1e293b", border: "2px solid", borderRadius: 12,
+    padding: "12px 6px", display: "flex", flexDirection: "column",
+    alignItems: "center", gap: 4, cursor: "pointer"
+  },
+  navRow: {
+    display: "flex", justifyContent: "space-around",
+    background: "#1e293b", padding: "10px 0", marginTop: "auto"
+  },
+  navBtn: {
+    background: "none", border: "none", color: "#94a3b8",
+    fontSize: 22, cursor: "pointer", display: "flex", flexDirection: "column",
+    alignItems: "center", gap: 2, padding: "4px 16px"
+  },
+
+  gameHeader: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "12px 16px", background: "#1e293b"
+  },
+  backBtn: {
+    background: "#334155", border: "none", color: "#fff",
+    width: 36, height: 36, borderRadius: 10, cursor: "pointer", fontSize: 18
+  },
+  progressWrap: { height: 4, background: "#1e293b" },
+  progressBar: { height: "100%", transition: "width 0.3s", borderRadius: 2 },
+  streakBadge: {
+    background: "#92400e", color: "#fcd34d", padding: "6px 16px",
+    textAlign: "center", fontSize: 13, fontWeight: "bold"
+  },
+  feedbackOverlay: {
+    position: "fixed", inset: 0, display: "flex",
+    alignItems: "center", justifyContent: "center", zIndex: 50,
+    pointerEvents: "none"
+  },
+  questionCard: {
+    margin: "16px", background: "#1e293b", borderRadius: 16, padding: "20px 18px"
+  },
+  questionText: { color: "#fff", fontSize: 18, lineHeight: 1.6, margin: 0, textAlign: "right" },
+  optionsGrid: { padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 10 },
+  optionBtn: {
+    border: "1px solid #334155", borderRadius: 12, padding: "14px 14px",
+    display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
+    textAlign: "right", transition: "background 0.2s"
+  },
+  optionLetter: {
+    background: "#334155", color: "#94a3b8", width: 28, height: 28,
+    borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: 13, fontWeight: "bold", flexShrink: 0
+  },
+  optionText: { color: "#e2e8f0", fontSize: 15, flex: 1 },
+
+  resultStat: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    background: "#0f172a", padding: "14px 16px", borderRadius: 12, marginTop: 12
+  },
+  pageHeader: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "14px 16px", background: "#1e293b"
+  },
+  pageTitle: { color: "#fff", fontSize: 18, margin: 0 },
+  leaderRow: {
+    display: "flex", alignItems: "center", gap: 12,
+    background: "#1e293b", borderRadius: 12, padding: "12px 16px", marginBottom: 8
+  },
+  leaderRank: { fontSize: 20, width: 36, textAlign: "center" },
+  leaderName: { color: "#fff", flex: 1, fontWeight: "bold" },
+
+  statRow: {
+    display: "flex", justifyContent: "space-between",
+    background: "#1e293b", padding: "12px 16px", borderRadius: 10, marginBottom: 8
+  },
+  storeItem: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    background: "#1e293b", padding: "16px", borderRadius: 12, marginBottom: 10
+  },
+  smallBtn: {
+    border: "none", color: "#fff", padding: "10px 18px",
+    borderRadius: 10, fontWeight: "bold", cursor: "pointer", fontSize: 14
+  },
+  msgBox: {
+    padding: "10px 16px", borderRadius: 10, color: "#fff",
+    textAlign: "center", marginBottom: 12, fontWeight: "bold"
+  },
+  devSupport: { marginTop: 24, borderTop: "1px solid #1e293b", paddingTop: 20 },
+  paypalBtn: {
+    display: "block", background: "#003087", color: "#fff",
+    textAlign: "center", padding: "14px", borderRadius: 12,
+    textDecoration: "none", fontWeight: "bold", fontSize: 15
+  },
+
+  settingRow: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    background: "#1e293b", padding: "16px", borderRadius: 12
+  },
+  toggleBtn: {
+    border: "none", color: "#fff", padding: "10px 18px",
+    borderRadius: 10, fontWeight: "bold", cursor: "pointer", fontSize: 14
+  },
+};
