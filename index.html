@@ -2,147 +2,119 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>تحدي العباقرة الرياضي - النسخة المتطورة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي العباقرة</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100%; overflow: hidden; position: fixed; background-color: #1b5e20; font-family: sans-serif; user-select: none; }
-        .game-container { width: 100%; height: 100%; background: linear-gradient(135deg, #2e7d32, #1b5e20); display: flex; flex-direction: column; overflow-y: auto; }
-        .global-header { width: 100%; background: #111; color: #ffe082; text-align: center; padding: 12px; font-weight: bold; border-bottom: 2px solid #ffb300; }
-        .screen { display: none; flex-direction: column; flex-grow: 1; padding: 15px; }
-        .active-screen { display: flex; }
-        .btn-action { background: #2e7d32; color: white; padding: 12px; border-radius: 10px; border: none; font-weight: bold; width: 100%; margin-top: 8px; }
-        .btn-opt { background: white; color: #2e7d32; padding: 12px; border-radius: 12px; border: none; font-weight: bold; margin: 5px 0; }
-        .correct-answer { background: #4caf50 !important; color: white !important; }
-        .wrong-answer { background: #f44336 !important; color: white !important; }
-        .overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; flex-direction: column; z-index: 50; }
-        .overlay-card { background: white; padding: 20px; border-radius: 20px; width: 90%; text-align: center; }
-        .encouragement-msg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: #ffb300; padding: 10px 20px; border-radius: 20px; z-index: 200; }
-        .tabs { display: flex; background: rgba(0,0,0,0.5); padding: 5px; gap: 5px; }
-        .tab-btn { flex: 1; padding: 8px; background: #37474f; color: white; border: none; border-radius: 5px; }
-        .tab-btn.active { background: #ffb300; color: #111; }
-        .tab-content { display: none; color: white; padding: 10px; }
-        .tab-content.active { display: block; }
+        body { font-family: sans-serif; background: #1b5e20; color: white; text-align: center; margin: 0; padding: 0; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:#111; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; }
+        .spinner { font-size: 60px; animation: spin 1.5s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .screen { display: none; padding: 20px; }
+        .active { display: block; }
+        .btn { display: block; width: 85%; margin: 10px auto; padding: 15px; background: #ffb300; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: black; }
+        input { padding: 12px; width: 80%; border-radius: 10px; border: none; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <div class="global-header">🏆 تحدي العباقرة الرياضي 🏆</div>
+<div id="loader"><div class="spinner">⚽</div><p>جاري التحميل...</p></div>
 
-    <div id="auth-screen" class="screen active-screen">
-        <button class="btn-action" onclick="simulateAuth()">دخول كزائر</button>
-    </div>
+<div id="login-screen" class="screen active">
+    <h1>تحدي العباقرة</h1>
+    <button class="btn" onclick="alert('تم ربط حسابك')">تسجيل دخول جوجل / فيسبوك</button>
+    <button class="btn" onclick="showScreen('name-screen')">دخول كزائر</button>
+</div>
 
-    <div id="welcome-screen" class="screen">
-        <h3 id="player-name-display">أهلاً بك</h3>
-        <input type="text" id="username-input" class="btn-action" placeholder="اكتب اسمك...">
-        <button class="btn-action" onclick="setPlayerName()">تأكيد</button>
-        <div id="game-options" style="display:none;">
-            <button class="btn-action" onclick="newGame()">بدء اللعبة</button>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="showTab('achievements')">🏅</button>
-                <button class="tab-btn" onclick="showTab('leaderboard')">📊</button>
-            </div>
-            <div id="achievements-tab" class="tab-content active"></div>
-            <div id="leaderboard-tab" class="tab-content"></div>
-        </div>
-    </div>
+<div id="name-screen" class="screen">
+    <input type="text" id="username" placeholder="أدخل اسمك الكريم">
+    <button class="btn" onclick="startGame()">بدء التحدي</button>
+</div>
 
-    <div id="game-screen" class="screen">
-        <div class="top-bar" style="color:white; display:flex; justify-content:space-between;">
-            <div>المستوى: <span id="level-num">1</span></div>
-            <div>النقاط: <span id="score-display">0</span></div>
-        </div>
-        <div id="question-text" style="color:white; margin: 20px 0; text-align:center;"></div>
-        <div id="options-container"></div>
-    </div>
+<div id="game-screen" class="screen">
+    <h3 id="q-text"></h3>
+    <div id="options-div"></div>
+    <button class="btn" onclick="showScreen('shop-screen')">المتجر & الإعدادات</button>
+</div>
+
+<div id="shop-screen" class="screen">
+    <h3>المتجر والمكافآت</h3>
+    <button class="btn" onclick="getDaily()">🎁 مكافأة يومية (قلب)</button>
+    <button class="btn" onclick="toggleSound()">🔊 الصوت: <span id="s-stat">ON</span></button>
+    <p>لدعم المطور:</p>
+    <a href="https://www.paypal.com/paypalme/YOUR_PAYPAL_LINK" target="_blank" style="color:yellow;">اضغط هنا لدعمي عبر PayPal</a>
+    <button class="btn" style="background:#444; color:white;" onclick="showScreen('game-screen')">رجوع</button>
 </div>
 
 <script>
     const questions = [
-        { q: "من هو الهداف التاريخي لدوري أبطال أوروبا؟", options: ["ميسي", "رونالدو", "ليفاندوفسكي", "بنزيما"], correct: 1 },
-        { q: "من فاز بكأس العالم 2022؟", options: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], correct: 2 },
-        { q: "كم عدد لاعبي كرة القدم الأساسيين؟", options: ["10", "11", "9", "12"], correct: 1 },
-        { q: "ما هو النادي الملقب بالملكي؟", options: ["برشلونة", "ريال مدريد", "أتلتيكو", "فالنسيا"], correct: 1 },
-        { q: "كم لقب عالم للبرازيل؟", options: ["4", "5", "6", "3"], correct: 1 },
-        { q: "أين أقيم كأس العالم 2010؟", options: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], correct: 1 },
-        { q: "من الملقب بالظاهرة؟", options: ["رونالدينيو", "رونالدو", "كريستيانو", "روماريو"], correct: 1 },
-        { q: "من الملقب بالسيدة العجوز؟", options: ["ميلان", "إنتر", "يوفنتوس", "روما"], correct: 2 },
-        { q: "مدرب يونايتد التاريخي؟", options: ["مورينيو", "فيرغسون", "غوارديولا", "فينغر"], correct: 1 },
-        { q: "فريق ليفاندوفسكي قبل برشلونة؟", options: ["بايرن", "دورتموند", "لايبزيغ", "شالكه"], correct: 0 },
-        { q: "هداف كأس العالم التاريخي؟", options: ["بيليه", "كلوزه", "رونالدو", "ميسي"], correct: 1 },
-        { q: "الكرة الذهبية 2022؟", options: ["مودريتش", "بنزيما", "مبابي", "هالاند"], correct: 1 },
-        { q: "جنسية هالاند؟", options: ["سويدي", "نرويجي", "دنماركي", "ألماني"], correct: 1 },
-        { q: "ملعب الريال؟", options: ["برنابيو", "كامب نو", "ميتروبوليتانو", "الميستايا"], correct: 0 },
-        { q: "مدافع فاز بالكرة الذهبية؟", options: ["راموس", "فان دايك", "كانافارو", "بويول"], correct: 2 },
-        { q: "ألقاب بايرن في الأبطال؟", options: ["5", "6", "7", "4"], correct: 1 },
-        { q: "بطل يورو 2020؟", options: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], correct: 1 },
-        { q: "هداف الأرجنتين؟", options: ["مارادونا", "باتيستوتا", "ميسي", "أغويرو"], correct: 2 },
-        { q: "تأسيس فيفا؟", options: ["1904", "1920", "1930", "1899"], correct: 0 },
-        { q: "أفريقي فاز بالكرة الذهبية؟", options: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], correct: 2 },
-        { q: "بطل أبطال 2021؟", options: ["سيتي", "تشيلسي", "ليفربول", "توتنهام"], correct: 1 },
-        { q: "أسرع هاتريك بالدوري الإنجليزي؟", options: ["ماني", "صلاح", "أغويرو", "ستيرلينغ"], correct: 0 },
-        { q: "أول مستضيف للمونديال؟", options: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], correct: 2 },
-        { q: "هداف الدوري الإسباني؟", options: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], correct: 1 },
-        { q: "نادي رونالدو الأول؟", options: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], correct: 2 },
-        { q: "عدد ألقاب ميلان بالأبطال؟", options: ["5", "7", "9", "6"], correct: 1 },
-        { q: "أكثر من شارك في المونديال؟", options: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], correct: 0 },
-        { q: "فريق فاز بالدوري بلا هزيمة 2004؟", options: ["يونايتد", "تشيلسي", "أرسنال", "سيتي"], correct: 2 },
-        { q: "مدرب ثلاثية الريال؟", options: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], correct: 1 },
-        { q: "هداف فرنسا؟", options: ["هنري", "جيرو", "مبابي", "بلاتيني"], correct: 1 },
-        { q: "فريق السداسية 2009؟", options: ["ريال مدريد", "بايرن", "برشلونة", "يونايتد"], correct: 2 },
-        { q: "منتخب وصل لنصف نهائي 2002؟", options: ["اليابان", "السعودية", "كوريا", "إيران"], correct: 2 },
-        { q: "هداف الإنجليزي التاريخي؟", options: ["روني", "شيرر", "هنري", "هاري كين"], correct: 1 },
-        { q: "نادي رونالدينيو الأوروبي الأول؟", options: ["باريس", "موناكو", "مارسيليا", "ليون"], correct: 0 },
-        { q: "أكثر لاعب فاز بكأس العالم؟", options: ["مارادونا", "بيليه", "رونالدو", "زيدان"], correct: 1 },
-        { q: "بطل 1993 بالأبطال؟", options: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], correct: 2 },
-        { q: "صاحب الـ 91 هدفاً بسنة؟", options: ["رونالدو", "ميسي", "بيليه", "مولر"], correct: 1 },
-        { q: "بطل ثلاثية 2010؟", options: ["يوفنتوس", "ميلان", "إنتر", "روما"], correct: 2 },
-        { q: "لقب منتخب كولومبيا؟", options: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], correct: 2 },
-        { q: "سجل في 5 مونديالات؟", options: ["ميسي", "رونالدو", "كلوزه", "بيليه"], correct: 1 },
-        { q: "بطل مونديال 1966؟", options: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], correct: 1 },
-        { q: "هداف إسبانيا؟", options: ["راؤول", "فيا", "توريس", "إنييستا"], correct: 1 },
-        { q: "حارس فاز بالكرة الذهبية؟", options: ["بوفون", "كاسياس", "ياشين", "نوير"], correct: 2 },
-        { q: "ألقاب ليفربول في الأبطال؟", options: ["5", "6", "7", "8"], correct: 1 },
-        { q: "بطل إيطاليا 2023؟", options: ["ميلان", "إنتر", "نابولي", "لاتسيو"], correct: 2 },
-        { q: "أسرع هدف في المونديال؟", options: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], correct: 0 },
-        { q: "حارس ملقب بالأخطبوط؟", options: ["كاسياس", "ياشين", "بوفون", "كان"], correct: 2 },
-        { q: "أكبر نتيجة في المونديال؟", options: ["10-1", "9-0", "8-0", "7-0"], correct: 1 },
-        { q: "ملعب نهائي 2022؟", options: ["لوسيل", "البيت", "خليفة", "الثمامة"], correct: 0 },
-        { q: "أي منتخب لقب بـ 'الماكينات'؟", options: ["ألمانيا", "إيطاليا", "فرنسا", "إسبانيا"], correct: 0 }
+        { q: "الهداف التاريخي لدوري الأبطال؟", o: ["ميسي", "رونالدو", "ليفاندوفسكي", "بنزيما"], c: 1 },
+        { q: "بطل مونديال 2022؟", o: ["فرنسا", "البرازيل", "الأرجنتين", "المغرب"], c: 2 },
+        { q: "عدد لاعبي كرة القدم الأساسيين؟", o: ["10", "11", "9", "12"], c: 1 },
+        { q: "النادي الملكي؟", o: ["برشلونة", "ريال مدريد", "أتلتيكو", "فالنسيا"], c: 1 },
+        { q: "ألقاب البرازيل؟", o: ["4", "5", "6", "3"], c: 1 },
+        { q: "فريق صلاح؟", o: ["تشيلسي", "سيتي", "ليفربول", "يونايتد"], c: 2 },
+        { q: "مونديال 2010؟", o: ["البرازيل", "جنوب أفريقيا", "ألمانيا", "روسيا"], c: 1 },
+        { q: "من هو الظاهرة؟", o: ["رونالدينيو", "رونالدو", "كريستيانو", "روماريو"], c: 1 },
+        { q: "لقب السيدة العجوز؟", o: ["ميلان", "إنتر", "يوفنتوس", "روما"], c: 2 },
+        { q: "مدرب فيرغسون؟", o: ["مورينيو", "فيرغسون", "غوارديولا", "فينغر"], c: 1 },
+        { q: "فريق ليفاندوفسكي قبل برشلونة؟", o: ["بايرن", "دورتموند", "لايبزيغ", "شالكه"], c: 0 },
+        { q: "هداف المونديال؟", o: ["بيليه", "كلوزه", "رونالدو", "ميسي"], c: 1 },
+        { q: "الكرة الذهبية 2022؟", o: ["مودريتش", "بنزيما", "مبابي", "هالاند"], c: 1 },
+        { q: "جنسية هالاند؟", o: ["سويدي", "نرويجي", "دنماركي", "ألماني"], c: 1 },
+        { q: "ملعب الريال؟", o: ["برنابيو", "كامب نو", "ميتروبوليتانو", "الميستايا"], c: 0 },
+        { q: "مدافع فاز بالكرة الذهبية؟", o: ["راموس", "فان دايك", "كانافارو", "بويول"], c: 2 },
+        { q: "ألقاب بايرن في الأبطال؟", o: ["5", "6", "7", "4"], c: 1 },
+        { q: "بطل يورو 2020؟", o: ["إنجلترا", "إيطاليا", "إسبانيا", "فرنسا"], c: 1 },
+        { q: "هداف الأرجنتين؟", o: ["مارادونا", "باتيستوتا", "ميسي", "أغويرو"], c: 2 },
+        { q: "تأسيس فيفا؟", o: ["1904", "1920", "1930", "1899"], c: 0 },
+        { q: "أفريقي فاز بالكرة الذهبية؟", o: ["إيتو", "دروغبا", "جورج وياه", "صلاح"], c: 2 },
+        { q: "بطل أبطال 2021؟", o: ["سيتي", "تشيلسي", "ليفربول", "توتنهام"], c: 1 },
+        { q: "أسرع هاتريك؟", o: ["ماني", "صلاح", "أغويرو", "ستيرلينغ"], c: 0 },
+        { q: "أول مستضيف للمونديال؟", o: ["البرازيل", "الأرجنتين", "الأوروغواي", "إيطاليا"], c: 2 },
+        { q: "هداف الدوري الإسباني؟", o: ["رونالدينيو", "ميسي", "راؤول", "بنزيمة"], c: 1 },
+        { q: "نادي رونالدو الأول؟", o: ["بنفيكا", "بورتو", "سبورتينغ لشبونة", "براغا"], c: 2 },
+        { q: "ألقاب ميلان بالأبطال؟", o: ["5", "7", "9", "6"], c: 1 },
+        { q: "أكثر من شارك بالمونديال؟", o: ["ماتايوس", "ميسي", "كلوزه", "مالديني"], c: 0 },
+        { q: "فريق فاز بالدوري بلا هزيمة 2004؟", o: ["يونايتد", "تشيلسي", "أرسنال", "سيتي"], c: 2 },
+        { q: "مدرب ثلاثية الريال؟", o: ["أنشيلوتي", "زيدان", "مورينيو", "بينيتيز"], c: 1 },
+        { q: "هداف فرنسا؟", o: ["هنري", "جيرو", "مبابي", "بلاتيني"], c: 1 },
+        { q: "فريق السداسية 2009؟", o: ["ريال مدريد", "بايرن", "برشلونة", "يونايتد"], c: 2 },
+        { q: "منتخب وصل لنصف نهائي 2002؟", o: ["اليابان", "السعودية", "كوريا", "إيران"], c: 2 },
+        { q: "هداف الإنجليزي التاريخي؟", o: ["روني", "شيرر", "هنري", "هاري كين"], c: 1 },
+        { q: "نادي رونالدينيو الأول؟", o: ["باريس", "موناكو", "مارسيليا", "ليون"], c: 0 },
+        { q: "أكثر لاعب فاز بكأس العالم؟", o: ["مارادونا", "بيليه", "رونالدو", "زيدان"], c: 1 },
+        { q: "بطل 1993 بالأبطال؟", o: ["ميلان", "برشلونة", "مارسيليا", "يوفنتوس"], c: 2 },
+        { q: "صاحب 91 هدفاً بسنة؟", o: ["رونالدو", "ميسي", "بيليه", "مولر"], c: 1 },
+        { q: "بطل ثلاثية 2010؟", o: ["يوفنتوس", "ميلان", "إنتر", "روما"], c: 2 },
+        { q: "لقب كولومبيا؟", o: ["التانغو", "السامبا", "صناع القهوة", "الساموراي"], c: 2 },
+        { q: "سجل في 5 مونديالات؟", o: ["ميسي", "رونالدو", "كلوزه", "بيليه"], c: 1 },
+        { q: "بطل مونديال 1966؟", o: ["أمريكا", "إنجلترا", "البرازيل", "إيطاليا"], c: 1 },
+        { q: "هداف إسبانيا؟", o: ["راؤول", "فيا", "توريس", "إنييستا"], c: 1 },
+        { q: "حارس فاز بالكرة الذهبية؟", o: ["بوفون", "كاسياس", "ياشين", "نوير"], c: 2 },
+        { q: "ألقاب ليفربول؟", o: ["5", "6", "7", "8"], c: 1 },
+        { q: "بطل إيطاليا 2023؟", o: ["ميلان", "إنتر", "نابولي", "لاتسيو"], c: 2 },
+        { q: "أسرع هدف مونديالي؟", o: ["هاكان شوكور", "كلوزه", "بيليه", "مارادونا"], c: 0 },
+        { q: "حارس الأخطبوط؟", o: ["كاسياس", "ياشين", "بوفون", "كان"], c: 2 },
+        { q: "أكبر نتيجة مونديالية؟", o: ["10-1", "9-0", "8-0", "7-0"], c: 1 },
+        { q: "ملعب نهائي 2022؟", o: ["لوسيل", "البيت", "خليفة", "الثمامة"], c: 0 }
     ];
 
-    let currentQIndex = 0, score = 0, playerName = "";
-
-    function simulateAuth() { document.getElementById("auth-screen").classList.remove("active-screen"); document.getElementById("welcome-screen").classList.add("active-screen"); }
-    function setPlayerName() { playerName = document.getElementById("username-input").value; document.getElementById("game-options").style.display = "block"; }
-    function newGame() { currentQIndex = 0; score = 0; document.getElementById("welcome-screen").classList.remove("active-screen"); document.getElementById("game-screen").classList.add("active-screen"); loadQuestion(); }
-    
-    function loadQuestion() {
-        let q = questions[currentQIndex];
-        document.getElementById("question-text").innerText = q.q;
-        document.getElementById("score-display").innerText = score;
-        document.getElementById("level-num").innerText = Math.floor(currentQIndex / 10) + 1;
-        let container = document.getElementById("options-container");
-        container.innerHTML = "";
-        q.options.forEach((opt, idx) => {
-            let btn = document.createElement("button");
-            btn.className = "btn-opt";
-            btn.innerText = opt;
-            btn.onclick = () => { if(idx === q.correct) { score += 10; btn.classList.add("correct-answer"); } else { btn.classList.add("wrong-answer"); } setTimeout(() => { currentQIndex++; if(currentQIndex < questions.length) loadQuestion(); else alert("انتهت اللعبة! نتيجتك: " + score); }, 500); };
-            container.appendChild(btn);
+    window.onload = () => setTimeout(() => document.getElementById('loader').style.display = 'none', 2000);
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    function startGame() { showScreen('game-screen'); loadQ(0); }
+    function loadQ(i) { 
+        let q = questions[i]; 
+        document.getElementById('q-text').innerText = (i+1) + "- " + q.q;
+        let d = document.getElementById('options-div'); d.innerHTML = "";
+        q.o.forEach((opt, idx) => {
+            let b = document.createElement('button'); b.className = 'btn'; b.innerText = opt;
+            b.onclick = () => { if(i < questions.length-1) loadQ(i+1); else alert("انتهت اللعبة!"); };
+            d.appendChild(b);
         });
     }
-
-    function showTab(tab) {
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.getElementById(tab + "-tab").classList.add("active");
-        event.target.classList.add("active");
-    }
-
-    function updateTabs() { document.getElementById("achievements-tab").innerHTML = "🏅 إنجازات: " + (score >= 100 ? "محقق" : "قيد العمل"); document.getElementById("leaderboard-tab").innerHTML = "📊 المتصدر: " + playerName; }
+    let sound = true;
+    function toggleSound() { sound = !sound; document.getElementById('s-stat').innerText = sound ? 'ON' : 'OFF'; }
+    function getDaily() { alert("تم إضافة قلب واحد لرصيدك!"); }
 </script>
 </body>
 </html>
